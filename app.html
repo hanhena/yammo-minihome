@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="robots" content="noindex,nofollow,noarchive" />
+<title>Prompt Minihome</title>
+<style>
+:root{
+  --page:#ececf2;
+  --shell:#ffffff;
+  --panel:#fbfbfd;
+  --text:#54505d;
+  --muted:#98939f;
+  --line:#d8d5de;
+  --accent:#aca2c6;
+  --accent2:#c6d6e8;
+  --accent3:#e8d6e2;
+  --nav:#f7f7fa;
+  --tag:#f0eff4;
+  --shadow:0 10px 28px rgba(72,66,83,.10);
+
+  --char:#e6f2e8;
+  --charText:#67806c;
+  --base:#e7eef9;
+  --baseText:#667b9c;
+  --uc:#f8e7ef;
+  --ucText:#9d7086;
+  --scene:#eee8f8;
+  --sceneText:#7e71a0;
+  --couple:#f3e7f3;
+  --coupleText:#936f91;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Pretendard,"Noto Sans KR",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--page)}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+
+body{
+  background:
+    radial-gradient(circle at 14% 8%,rgba(255,255,255,.9),transparent 22%),
+    linear-gradient(180deg,#f3f3f7 0%,var(--page) 100%);
+}
+
+.wrap{max-width:1320px;margin:0 auto;padding:28px 18px 60px}
+.minihome{
+  background:var(--shell);
+  border:1px solid #cfccd6;
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.top-deco{
+  height:28px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;letter-spacing:4px;color:#b9b2c7;
+  border-bottom:1px dashed #d9d4e2;
+  background:#fafafd;
+  user-select:none;
+}
+.top-deco::before{content:"♡  ·  ʚɞ  ·  ✧  ·  ☁  ·  ✧  ·  ʚɞ  ·  ♡"}
+
+.window-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;
+  border-bottom:1px solid var(--line);
+  background:#f6f6fa;
+}
+.window-title{font-size:12px;font-weight:800;color:#77717e;letter-spacing:.02em}
+.window-title::before{content:"▣ ";color:var(--accent)}
+.window-actions{display:flex;gap:5px}
+.win-btn{
+  width:24px;height:24px;border:1px solid #d7d3df;background:#fff;color:#aaa4b0;border-radius:8px;font-size:11px
+}
+
+.shell{
+  display:grid;
+  grid-template-columns:220px minmax(0,1fr);
+  min-height:720px;
+}
+.sidebar{
+  border-right:1px solid var(--line);
+  background:linear-gradient(180deg,#fbfbfd 0%,#f8f8fb 100%);
+  padding:17px 14px;
+}
+.profile-card{
+  border:1px solid #ddd9e3;
+  border-radius:14px;
+  background:#fff;
+  padding:12px;
+}
+.profile-image{
+  width:100%;
+  aspect-ratio:1/1.08;
+  border:1px solid #d7d3dc;
+  border-radius:8px;
+  background:#f2f1f5 center/cover no-repeat;
+  position:relative;
+  overflow:hidden;
+}
+.profile-image::after{
+  content:"♡";
+  position:absolute;right:8px;bottom:6px;
+  color:#c8b8d6;font-size:22px;
+}
+.profile-name{font-weight:800;font-size:15px;margin-top:11px}
+.profile-name::after{content:" ʚɞ";font-size:10px;color:#b7abc7;font-weight:500}
+.profile-intro{font-size:11px;line-height:1.55;color:var(--muted);margin-top:4px;white-space:pre-wrap}
+.profile-status{
+  margin-top:10px;padding:8px 9px;border:1px solid #e0dce7;border-radius:8px;
+  background:#fbfaff;font-size:10px;line-height:1.55;color:#827b8d
+}
+.stats{
+  display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px
+}
+.stat{
+  border:1px solid #e0dde5;background:#fff;border-radius:9px;padding:8px;text-align:center
+}
+.stat b{display:block;font-size:13px;color:#726a7d}
+.stat span{font-size:9px;color:#aaa4b0}
+
+.menu-title{margin:18px 3px 7px;font-size:10px;color:#aaa5b1;text-transform:uppercase;letter-spacing:.08em}
+.side-menu{display:flex;flex-direction:column;gap:6px}
+.side-btn{
+  width:100%;border:1px solid #dedbe5;background:#fff;color:#77717f;
+  border-radius:9px;padding:9px 10px;text-align:left;font-size:11px
+}
+.side-btn:hover,.side-btn.active{
+  background:#f1eef7;border-color:#d4cce3;color:#6f6680
+}
+.side-btn .ico{display:inline-block;width:18px;color:#afa4bf}
+.mini-note{
+  margin-top:16px;border-top:1px dashed #dcd7e3;padding-top:11px;
+  font-size:9px;color:#aaa5b0;line-height:1.5
+}
+
+.main{
+  padding:16px;
+  background:
+    linear-gradient(90deg,rgba(244,244,248,.75) 1px,transparent 1px),
+    linear-gradient(rgba(244,244,248,.75) 1px,transparent 1px),
+    #fff;
+  background-size:28px 28px;
+}
+.banner{
+  height:var(--banner-height,220px);
+  border:1px solid #d9d5df;
+  border-radius:13px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.05),rgba(88,79,101,.16)),
+    linear-gradient(135deg,#c9d8ea,#dcd2e8 55%,#eadbe4);
+  background-size:cover;background-position:center;
+  position:relative;overflow:hidden;
+}
+.banner::before{
+  content:"";
+  position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(255,255,255,.18),transparent 28%,transparent 72%,rgba(255,255,255,.12))
+}
+.banner-copy{
+  position:absolute;left:18px;bottom:14px;color:#fff;text-shadow:0 2px 10px rgba(63,56,73,.28)
+}
+.banner-title{font-size:19px;font-weight:800}
+.banner-title::after{content:"  ♡";font-size:13px;font-weight:500}
+.banner-sub{font-size:10px;margin-top:3px;opacity:.92}
+.settings-btn{
+  position:absolute;right:10px;top:10px;width:34px;height:34px;
+  border:1px solid rgba(255,255,255,.40);border-radius:11px;
+  background:rgba(255,255,255,.20);color:#fff;backdrop-filter:blur(7px)
+}
+
+.search-row{
+  display:grid;grid-template-columns:minmax(0,1fr) 96px 42px;gap:7px;margin-top:11px
+}
+.search,.select,.sort-btn{
+  border:1px solid #dcd8e3;background:#fff;color:#69636f;outline:none
+}
+.search{height:42px;border-radius:12px;padding:0 13px}
+.select,.sort-btn{height:38px;border-radius:10px}
+.sort-btn{font-size:17px}
+
+.filters{margin:12px 0 10px}
+.filter-line{display:flex;align-items:flex-start;gap:8px;margin:6px 0}
+.filter-label{width:58px;font-size:10px;color:#a29ca8;padding-top:5px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  border:1px solid #ddd9e3;background:#fff;color:#807a85;
+  border-radius:8px;padding:6px 10px;font-size:10px
+}
+.chip.active{
+  background:#efeaf6;border-color:#d7cce6;color:#6f6380;font-weight:700
+}
+
+.board-head{
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid #dedbe4;border-bottom:1px solid #dedbe4;
+  padding:8px 2px;margin:8px 0 11px
+}
+.board-title{font-size:12px;font-weight:800}
+.board-title::before{content:"♡ ";color:#b7a8c9}
+.count{font-size:10px;color:#aaa4af}
+.board-actions{display:flex;gap:6px}
+.btn{
+  border:1px solid #dcd8e3;background:#fff;color:#716b77;
+  border-radius:9px;padding:7px 10px;font-size:10px
+}
+.btn.primary{background:#a9a0c1;color:#fff;border-color:#a9a0c1}
+.btn.danger{color:#a96f7f}
+.btn.dark{background:#696471;color:#fff;border-color:#696471}
+
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.card{
+  min-width:0;border:1px solid #ddd9e2;background:#fff;border-radius:10px;overflow:hidden;
+  box-shadow:0 2px 7px rgba(70,65,78,.05);transition:.13s ease
+}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(70,65,78,.09)}
+.thumb{
+  aspect-ratio:1/1;position:relative;background:#f1f0f4;overflow:hidden;cursor:pointer
+}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb-empty{
+  height:100%;display:grid;place-items:center;text-align:center;color:#aaa5b0;font-size:10px;
+  background:linear-gradient(135deg,#f5f5f8,#f0eef5)
+}
+.thumb-empty::before{
+  content:"ʚɞ";display:block;font-size:26px;color:#c2b7d1;margin-bottom:4px
+}
+.favorite{
+  position:absolute;left:7px;top:7px;width:27px;height:27px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.65);background:rgba(255,255,255,.82);
+  color:#aaa3af;z-index:2
+}
+.favorite.on{color:#d18faf}
+.quick-copy{
+  position:absolute;right:7px;bottom:7px;border:0;border-radius:8px;padding:6px 8px;
+  background:rgba(68,63,75,.70);color:#fff;font-size:9px;opacity:0;transition:.13s;z-index:2
+}
+.card:hover .quick-copy{opacity:1}
+.card-body{padding:9px;cursor:pointer}
+.card-title{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-desc{font-size:9px;color:#aaa4af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:4px;min-height:13px}
+.card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.tag{
+  font-size:8px;padding:3px 6px;border-radius:5px;background:var(--tag);color:#8d8792
+}
+.cat-character{background:var(--char);color:var(--charText)}
+.cat-base{background:var(--base);color:var(--baseText)}
+.cat-uc{background:var(--uc);color:var(--ucText)}
+.cat-scene{background:var(--scene);color:var(--sceneText)}
+.cat-couple{background:var(--couple);color:var(--coupleText)}
+
+.empty{
+  grid-column:1/-1;min-height:280px;display:grid;place-items:center;text-align:center;
+  border:1px dashed #d4d0dc;border-radius:12px;background:rgba(255,255,255,.72);color:#9f99a5;font-size:11px
+}
+
+/* modal */
+.modal{
+  position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;
+  background:rgba(70,66,77,.38);backdrop-filter:blur(4px);z-index:999
+}
+.modal.open{display:flex}
+.dialog{
+  width:min(870px,96vw);max-height:92vh;overflow:auto;background:#fff;border:1px solid #d5d1dc;border-radius:14px;
+  box-shadow:0 20px 60px rgba(55,50,63,.24)
+}
+.dialog.detail{width:min(1000px,96vw)}
+.dialog-topline{
+  height:22px;border-bottom:1px dashed #ddd7e4;background:#faf9fc;
+  display:flex;align-items:center;justify-content:center;color:#beb5ca;font-size:9px;letter-spacing:3px
+}
+.dialog-topline::before{content:"♡  ·  ʚɞ  ·  ✧  ·  ʚɞ  ·  ♡"}
+.dialog-head{
+  position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;
+  padding:11px 13px;border-bottom:1px solid #ddd9e3;background:#fff
+}
+.dialog-head h2{margin:0;font-size:13px}
+.dialog-head h2::before{content:"▣ ";color:#a99db9}
+.dialog-body{padding:14px}
+.dialog-foot{display:flex;justify-content:flex-end;gap:6px;padding:0 14px 14px}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+label{font-size:10px;font-weight:700;color:#7d7783}
+input[type=text],textarea,.form-select{
+  width:100%;border:1px solid #d9d5df;background:#fff;color:#5e5963;border-radius:9px;padding:9px 10px;outline:none
+}
+textarea{min-height:115px;resize:vertical;line-height:1.5}
+.image-picker{border:1px dashed #d7d1de;background:#fbfafc;border-radius:9px;padding:9px}
+.preview{display:none;width:100%;max-height:280px;object-fit:contain;border-radius:7px;margin-top:8px;background:#f3f2f5}
+
+.detail-layout{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(360px,1.2fr);gap:15px}
+.detail-image{
+  min-height:330px;border:1px solid #d8d4de;background:#f1f0f4;border-radius:9px;overflow:hidden;display:grid;place-items:center
+}
+.detail-image img{width:100%;height:100%;max-height:620px;object-fit:contain}
+.detail-info h3{font-size:20px;margin:2px 0 7px}
+.detail-info h3::after{content:"  ♡";font-size:11px;color:#b9adc5;font-weight:400}
+.detail-meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+.prompt-section{margin-top:10px}
+.prompt-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.prompt-head b{font-size:10px;color:#726c78}
+.prompt-box{
+  border:1px solid #ddd9e2;border-radius:9px;background:#fbfbfd;padding:10px;
+  font-size:11px;line-height:1.55;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto
+}
+.note-box{
+  border:1px solid #e1dde6;border-radius:9px;background:#f8f7fb;padding:9px;
+  font-size:10px;line-height:1.5;color:#77717d;white-space:pre-wrap
+}
+.detail-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+
+/* couple editor */
+.couple-fields{display:none}
+.couple-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.couple-box{border:1px solid #ddd8e3;background:#faf9fc;border-radius:11px;padding:10px}
+.couple-box-title{font-size:11px;font-weight:800;color:#766f7d;margin-bottom:8px}
+.couple-box-title::before{content:"♡ ";color:#b4a6c4}
+.couple-box .field{margin-top:8px}
+.couple-box textarea{min-height:105px}
+@media(max-width:700px){.couple-grid{grid-template-columns:1fr}}
+
+/* settings */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.color-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.color-control{
+  display:grid;grid-template-columns:1fr 44px;gap:7px;align-items:center;
+  border:1px solid #e0dce5;background:#fbfafc;border-radius:9px;padding:8px 9px
+}
+.color-control input[type=color]{width:44px;height:34px;border:1px solid #d8d4df;border-radius:8px;background:#fff;padding:2px}
+.color-hint{font-size:9px;color:#aaa4af;margin-top:2px}
+.banner-position-box{border:1px solid #e0dce5;background:#fbfafc;border-radius:9px;padding:9px 10px;display:flex;flex-direction:column;gap:8px}
+.range-row{display:grid;grid-template-columns:38px minmax(0,1fr) 46px;gap:8px;align-items:center;font-size:10px;color:#7d7783}
+.range-row input[type=range]{width:100%;accent-color:var(--accent)}
+.range-row b{font-size:9px;color:#99929f;text-align:right;font-weight:600}
+.form-select.compact{padding:7px 8px;font-size:10px}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+  background:#65606d;color:#fff;padding:9px 13px;border-radius:10px;font-size:10px;
+  opacity:0;pointer-events:none;transition:.15s;z-index:2000
+}
+.toast.show{opacity:1}
+
+@media(max-width:1100px){
+  .shell{grid-template-columns:190px minmax(0,1fr)}
+  .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:800px){
+  .shell{grid-template-columns:1fr}
+  .sidebar{border-right:0;border-bottom:1px solid var(--line)}
+  .profile-card{display:grid;grid-template-columns:120px 1fr;gap:12px}
+  .profile-image{grid-row:1/5}
+  .stats{grid-template-columns:1fr 1fr}
+  .side-menu{flex-direction:row;flex-wrap:wrap}
+  .side-btn{width:auto}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .detail-layout{grid-template-columns:1fr}
+  .form-grid,.settings-grid{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+}
+@media(max-width:520px){
+  .wrap{padding:10px 8px 35px}
+  .grid{grid-template-columns:1fr 1fr;gap:8px}
+  .main{padding:10px}
+  .profile-card{grid-template-columns:100px 1fr}
+  .banner{height:var(--banner-height,220px)}
+  .search-row{grid-template-columns:1fr 86px 38px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="minihome">
+    <div class="top-deco"></div>
+
+    <div class="window-head">
+      <div class="window-title">prompt_minihome.exe · v6.1</div>
+      <div class="window-actions">
+        <button class="win-btn">♡</button>
+        <button class="win-btn">－</button>
+        <button class="win-btn">□</button>
+      </div>
+    </div>
+
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="profile-card">
+          <div class="profile-image" id="profileImage"></div>
+
+          <div>
+            <div class="profile-name" id="profileName">nickname</div>
+            <div class="profile-intro" id="profileIntro">open / only · prompt archive</div>
+          </div>
+
+          <div class="profile-status" id="profileStatus">
+            “좋아하는 프롬프트를 잃어버리지 않도록, 여기 오래 남겨두기.”
+          </div>
+
+          <div class="stats">
+            <div class="stat"><b id="todayCount">0</b><span>TODAY</span></div>
+            <div class="stat"><b id="totalCount">0</b><span>TOTAL</span></div>
+          </div>
+        </div>
+
+        <div class="menu-title">menu</div>
+        <div class="side-menu">
+          <button class="side-btn active" data-sidecat=""><span class="ico">♡</span>전체</button>
+          <button class="side-btn" data-sidecat="캐릭터"><span class="ico">♙</span>캐릭터</button>
+          <button class="side-btn" data-sidecat="커플"><span class="ico">♡</span>커플</button>
+          <button class="side-btn" data-sidecat="기본 프롬프트"><span class="ico">✦</span>기본 프롬프트</button>
+          <button class="side-btn" data-sidecat="장면"><span class="ico">☆</span>장면</button>
+          <button class="side-btn" data-sidecat="기타"><span class="ico">⌂</span>기타</button>
+          <button class="side-btn" id="backupSide"><span class="ico">⇩</span>백업</button>
+        </div>
+
+        <div class="mini-note">
+          ʚɞ angelcore point<br>
+          ♡ cyworld mini-home mood
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="banner" id="banner">
+          <div class="banner-copy">
+            <div class="banner-title" id="archiveTitle">Prompt Archive</div>
+            <div class="banner-sub" id="archiveSub">my little prompt diary</div>
+          </div>
+          <button class="settings-btn" id="settingsBtn" title="꾸미기">⚙</button>
+        </section>
+
+        <section class="search-row">
+          <input class="search" id="searchInput" placeholder="제목, 태그, 프롬프트 검색..." />
+          <select class="select" id="sortSelect">
+            <option value="updated">최근순</option>
+            <option value="created">등록순</option>
+            <option value="name">이름순</option>
+            <option value="favorite">즐겨찾기</option>
+          </select>
+          <button class="sort-btn" id="sortDirBtn">⇅</button>
+        </section>
+
+        <section class="filters">
+          <div class="filter-line">
+            <div class="filter-label">종류</div>
+            <div class="chips" id="categoryChips"></div>
+          </div>
+          <div class="filter-line">
+            <div class="filter-label">태그</div>
+            <div class="chips" id="tagChips"></div>
+          </div>
+        </section>
+
+        <section class="board-head">
+          <div>
+            <span class="board-title">Prompt Photo Album</span>
+            <span class="count" id="countText"></span>
+          </div>
+          <div class="board-actions">
+            <button class="btn primary" id="addBtn">+ 새 항목</button>
+            <button class="btn" id="exportBtn">백업</button>
+            <button class="btn" id="importBtn">복구</button>
+            <input type="file" id="importFile" accept=".json,application/json" hidden />
+          </div>
+        </section>
+
+        <section class="grid" id="grid"></section>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- 편집 -->
+<div class="modal" id="editModal">
+  <div class="dialog">
+    <div class="dialog-topline"></div>
+    <div class="dialog-head">
+      <h2 id="editTitle">새 항목</h2>
+      <button class="btn" data-close="editModal">close</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>제목</label>
+          <input type="text" id="titleInput" placeholder="예: 한여름 / 츄연 그림체 / 커플 프롬프트" />
+        </div>
+
+        <div class="field">
+          <label>종류</label>
+          <select class="form-select" id="categoryInput">
+            <option value="캐릭터">캐릭터</option>
+            <option value="커플">커플</option>
+            <option value="기본 프롬프트">기본 프롬프트</option>
+            <option value="장면">장면</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+
+        <div class="field full">
+          <label>태그</label>
+          <input type="text" id="tagsInput" placeholder="쉼표로 구분 · 예: 오너캐, NAI5, 커플" />
+        </div>
+
+        <div class="field full">
+          <label>예시 이미지</label>
+          <div class="image-picker">
+            <input type="file" id="imageInput" accept="image/*" />
+            <img class="preview" id="imagePreview" alt="미리보기" />
+          </div>
+        </div>
+
+        <div id="standardPromptFields" class="field full">
+          <div class="field full">
+            <label>메인 프롬프트</label>
+            <textarea id="promptInput" placeholder="캐릭터 프롬프트, 작태 프롬프트, 장면 프롬프트 등을 저장하세요."></textarea>
+          </div>
+
+          <div class="field full" style="margin-top:10px">
+            <label>UC / 보조 프롬프트</label>
+            <textarea id="ucInput" placeholder="캐릭터 UC 또는 함께 보관할 보조 프롬프트"></textarea>
+          </div>
+        </div>
+
+        <div id="couplePromptFields" class="field full couple-fields">
+          <div class="couple-grid">
+            <div class="couple-box">
+              <div class="couple-box-title">캐릭터 1</div>
+              <div class="field">
+                <label>이름</label>
+                <input type="text" id="char1NameInput" placeholder="예: 한여름" />
+              </div>
+              <div class="field">
+                <label>프롬프트</label>
+                <textarea id="char1PromptInput" placeholder="캐릭터 1 프롬프트"></textarea>
+              </div>
+              <div class="field">
+                <label>UC / 보조 프롬프트</label>
+                <textarea id="char1UcInput" placeholder="캐릭터 1 전용 UC가 있으면 입력"></textarea>
+              </div>
+            </div>
+
+            <div class="couple-box">
+              <div class="couple-box-title">캐릭터 2</div>
+              <div class="field">
+                <label>이름</label>
+                <input type="text" id="char2NameInput" placeholder="예: 권이진" />
+              </div>
+              <div class="field">
+                <label>프롬프트</label>
+                <textarea id="char2PromptInput" placeholder="캐릭터 2 프롬프트"></textarea>
+              </div>
+              <div class="field">
+                <label>UC / 보조 프롬프트</label>
+                <textarea id="char2UcInput" placeholder="캐릭터 2 전용 UC가 있으면 입력"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>메모</label>
+          <textarea id="noteInput" placeholder="수정 포인트, 버전, 사용 팁 등"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-foot">
+      <button class="btn" data-close="editModal">취소</button>
+      <button class="btn primary" id="saveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 -->
+<div class="modal" id="detailModal">
+  <div class="dialog detail">
+    <div class="dialog-topline"></div>
+    <div class="dialog-head">
+      <h2>photo diary</h2>
+      <button class="btn" data-close="detailModal">close</button>
+    </div>
+    <div class="dialog-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- 설정 -->
+<div class="modal" id="settingsModal">
+  <div class="dialog">
+    <div class="dialog-topline"></div>
+    <div class="dialog-head">
+      <h2>mini-home 꾸미기</h2>
+      <button class="btn" data-close="settingsModal">close</button>
+    </div>
+
+    <div class="dialog-body">
+      <div class="settings-grid">
+        <div class="field">
+          <label>프로필 이름</label>
+          <input type="text" id="settingProfileName" />
+        </div>
+
+        <div class="field">
+          <label>프로필 한줄소개</label>
+          <input type="text" id="settingProfileIntro" />
+        </div>
+
+        <div class="field full">
+          <label>프로필 상태글</label>
+          <textarea id="settingProfileStatus" style="min-height:80px"></textarea>
+        </div>
+
+        <div class="field">
+          <label>아카이브 제목</label>
+          <input type="text" id="settingTitle" />
+        </div>
+
+        <div class="field">
+          <label>부제목</label>
+          <input type="text" id="settingSub" />
+        </div>
+
+        <div class="field full">
+          <label>배너 이미지</label>
+          <div class="image-picker">
+            <input type="file" id="bannerInput" accept="image/*" />
+            <img class="preview" id="bannerPreview" />
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>배너 높이</label>
+          <div class="banner-position-box">
+            <div class="range-row">
+              <span>세로</span>
+              <input type="range" id="bannerHeight" min="140" max="360" step="10" />
+              <b id="bannerHeightValue">220px</b>
+            </div>
+          </div>
+          <div class="color-hint">기본 220px · 원하는 만큼 세로로 늘릴 수 있어요.</div>
+        </div>
+
+        <div class="field full">
+          <label>배너 위치 조정</label>
+          <div class="banner-position-box">
+            <div class="range-row">
+              <span>좌우</span>
+              <input type="range" id="bannerPosX" min="0" max="100" step="1" />
+              <b id="bannerPosXValue">50%</b>
+            </div>
+            <div class="range-row">
+              <span>상하</span>
+              <input type="range" id="bannerPosY" min="0" max="100" step="1" />
+              <b id="bannerPosYValue">50%</b>
+            </div>
+            <div class="range-row">
+              <span>맞춤</span>
+              <select class="form-select compact" id="bannerSizeMode">
+                <option value="cover">영역 채우기</option>
+                <option value="contain">이미지 전체 보기</option>
+              </select>
+              <b></b>
+            </div>
+          </div>
+          <div class="color-hint">배너가 잘리면 좌우·상하를 움직이거나 ‘이미지 전체 보기’를 선택하세요.</div>
+        </div>
+
+        <div class="field full">
+          <label>프로필 이미지</label>
+          <div class="image-picker">
+            <input type="file" id="avatarInput" accept="image/*" />
+            <img class="preview" id="avatarPreview" style="max-height:160px" />
+          </div>
+        </div>
+
+        <div class="field full">
+          <label>컬러</label>
+          <div class="color-grid">
+            <div>
+              <div class="color-control"><span>페이지 배경</span><input type="color" id="colorPage"></div>
+              <div class="color-hint">사이트 바깥 배경</div>
+            </div>
+            <div>
+              <div class="color-control"><span>본문 배경</span><input type="color" id="colorShell"></div>
+              <div class="color-hint">미니홈피 내부</div>
+            </div>
+            <div>
+              <div class="color-control"><span>글자</span><input type="color" id="colorText"></div>
+              <div class="color-hint">본문 텍스트</div>
+            </div>
+            <div>
+              <div class="color-control"><span>보조 글자</span><input type="color" id="colorMuted"></div>
+              <div class="color-hint">설명·메타</div>
+            </div>
+            <div>
+              <div class="color-control"><span>테두리</span><input type="color" id="colorLine"></div>
+              <div class="color-hint">카드와 창 테두리</div>
+            </div>
+            <div>
+              <div class="color-control"><span>포인트</span><input type="color" id="colorAccent"></div>
+              <div class="color-hint">선택·버튼</div>
+            </div>
+            <div>
+              <div class="color-control"><span>하늘 포인트</span><input type="color" id="colorAccent2"></div>
+              <div class="color-hint">배너·서브 포인트</div>
+            </div>
+            <div>
+              <div class="color-control"><span>핑크 포인트</span><input type="color" id="colorAccent3"></div>
+              <div class="color-hint">엔젤코어 포인트</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-foot">
+      <button class="btn" id="resetThemeBtn">기본값</button>
+      <button class="btn primary" id="saveSettingsBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const DB_NAME='PromptMinihomeDB';
+const DB_VERSION=2;
+const STORE='items';
+const SETTINGS_STORE='settings';
+const SETTINGS='PromptMinihomeSettingsV4';
+
+const DEFAULT_THEME={
+  page:'#ececf2',
+  shell:'#ffffff',
+  text:'#54505d',
+  muted:'#98939f',
+  line:'#d8d5de',
+  accent:'#aca2c6',
+  accent2:'#c6d6e8',
+  accent3:'#e8d6e2'
+};
+
+const DEFAULT_SETTINGS={
+  profileName:'nickname',
+  profileIntro:'open / only · prompt archive',
+  profileStatus:'“좋아하는 프롬프트를 잃어버리지 않도록, 여기 오래 남겨두기.”',
+  title:'Prompt Archive',
+  sub:'my little prompt diary',
+  banner:'',
+  avatar:'',
+  bannerPosX:50,
+  bannerPosY:50,
+  bannerSizeMode:'cover',
+  bannerHeight:220,
+  theme:{...DEFAULT_THEME}
+};
+
+let db;
+let editingId=null;
+let currentImage='';
+let selectedCategory='';
+let selectedTag='';
+let sortDesc=true;
+let settings=JSON.parse(localStorage.getItem(SETTINGS)||'null')||structuredClone(DEFAULT_SETTINGS);
+settings={...DEFAULT_SETTINGS,...settings,theme:{...DEFAULT_THEME,...(settings.theme||{})}};
+
+const $=id=>document.getElementById(id);
+const CATEGORIES=['캐릭터','커플','기본 프롬프트','장면','기타'];
+
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME,DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const d=req.result;
+      if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE,{keyPath:'id'});
+      if(!d.objectStoreNames.contains(SETTINGS_STORE)) d.createObjectStore(SETTINGS_STORE,{keyPath:'key'});
+    };
+    req.onsuccess=()=>{db=req.result;resolve(db)};
+    req.onerror=()=>reject(req.error);
+  });
+}
+function os(mode='readonly'){return db.transaction(STORE,mode).objectStore(STORE)}
+function getAll(){return new Promise((res,rej)=>{const r=os().getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error)})}
+function put(item){return new Promise((res,rej)=>{const r=os('readwrite').put(item);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+function remove(id){return new Promise((res,rej)=>{const r=os('readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+function settingsOS(mode='readonly'){return db.transaction(SETTINGS_STORE,mode).objectStore(SETTINGS_STORE)}
+function loadSettingsDB(){
+  return new Promise((res,rej)=>{
+    const r=settingsOS().get('main');
+    r.onsuccess=()=>res(r.result?.value||null);
+    r.onerror=()=>rej(r.error)
+  })
+}
+function persistSettingsDB(value){
+  if(!db)return Promise.resolve();
+  return new Promise((res,rej)=>{
+    const r=settingsOS('readwrite').put({key:'main',value});
+    r.onsuccess=()=>res();
+    r.onerror=()=>rej(r.error)
+  })
+}
+async function migrateLegacyItems(){
+  const items=await getAll();
+  for(const item of items){
+    if(item.category==='공용 UC'){
+      item.category='기타';
+      item.tags=[...new Set([...(item.tags||[]),'공용 UC'])];
+      item.updatedAt=Date.now();
+      await put(item);
+    }
+  }
+}
+
+function esc(s=''){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
+}
+function toast(msg){
+  const t=$('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>t.classList.remove('show'),1500)
+}
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);toast('복사했습니다.')}
+  catch{
+    const ta=document.createElement('textarea');
+    ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('복사했습니다.')
+  }
+}
+function composeCharacter(item,n){
+  const name=item[`char${n}Name`]?.trim()||`캐릭터 ${n}`;
+  const prompt=item[`char${n}Prompt`]?.trim()||'';
+  const uc=item[`char${n}Uc`]?.trim()||'';
+  const arr=[`[${name}]`];
+  if(prompt) arr.push(prompt);
+  if(uc) arr.push(`[UC]\n${uc}`);
+  return arr.length>1?arr.join('\n\n'):'';
+}
+function composeAll(item){
+  if(item.category==='커플'){
+    return [composeCharacter(item,1),composeCharacter(item,2)].filter(Boolean).join('\n\n');
+  }
+  const arr=[];
+  if(item.prompt?.trim()) arr.push(item.prompt.trim());
+  if(item.uc?.trim()) arr.push(item.uc.trim());
+  return arr.join('\n\n');
+}
+function catClass(c){
+  return c==='캐릭터'?'cat-character':
+         c==='커플'?'cat-couple':
+         c==='기본 프롬프트'?'cat-base':
+         c==='장면'?'cat-scene':'';
+}
+function sameDay(ts){
+  const d=new Date(ts||0),n=new Date();
+  return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate()
+}
+
+function applySettings(){
+  settings.theme={...DEFAULT_THEME,...(settings.theme||{})};
+  const r=document.documentElement.style;
+  r.setProperty('--page',settings.theme.page);
+  r.setProperty('--shell',settings.theme.shell);
+  r.setProperty('--text',settings.theme.text);
+  r.setProperty('--muted',settings.theme.muted);
+  r.setProperty('--line',settings.theme.line);
+  r.setProperty('--accent',settings.theme.accent);
+  r.setProperty('--accent2',settings.theme.accent2);
+  r.setProperty('--accent3',settings.theme.accent3);
+
+  $('profileName').textContent=settings.profileName;
+  $('profileIntro').textContent=settings.profileIntro;
+  $('profileStatus').textContent=settings.profileStatus;
+  $('archiveTitle').textContent=settings.title;
+  $('archiveSub').textContent=settings.sub;
+
+  $('profileImage').style.backgroundImage=settings.avatar?`url("${settings.avatar}")`:'';
+  $('banner').style.backgroundImage=settings.banner
+    ? `linear-gradient(180deg,rgba(255,255,255,.04),rgba(80,70,90,.20)),url("${settings.banner}")`
+    : `linear-gradient(180deg,rgba(255,255,255,.05),rgba(88,79,101,.16)),linear-gradient(135deg,${settings.theme.accent2},#dcd2e8 55%,${settings.theme.accent3})`;
+  $('banner').style.backgroundPosition=settings.banner
+    ? `${Number(settings.bannerPosX ?? 50)}% ${Number(settings.bannerPosY ?? 50)}%`
+    : 'center';
+  $('banner').style.backgroundSize=settings.banner
+    ? (settings.bannerSizeMode || 'cover')
+    : 'cover';
+  $('banner').style.backgroundRepeat='no-repeat';
+  document.documentElement.style.setProperty('--banner-height',`${Number(settings.bannerHeight ?? 220)}px`);
+}
+function saveSettings(){
+  try{localStorage.setItem(SETTINGS,JSON.stringify(settings))}catch(e){console.warn(e)}
+  persistSettingsDB(structuredClone(settings)).catch(e=>console.error(e));
+  applySettings()
+}
+
+async function render(){
+  const items=await getAll();
+  const q=$('searchInput').value.trim().toLowerCase();
+  const sort=$('sortSelect').value;
+
+  $('totalCount').textContent=items.length;
+  $('todayCount').textContent=items.filter(x=>sameDay(x.createdAt)).length;
+
+  const tags=[...new Set(items.flatMap(x=>x.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));
+
+  $('categoryChips').innerHTML=[
+    `<button class="chip ${!selectedCategory?'active':''}" data-cat="">전체</button>`,
+    ...CATEGORIES.map(c=>`<button class="chip ${selectedCategory===c?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`)
+  ].join('');
+
+  $('tagChips').innerHTML=[
+    `<button class="chip ${!selectedTag?'active':''}" data-tag="">전체</button>`,
+    ...tags.map(t=>`<button class="chip ${selectedTag===t?'active':''}" data-tag="${esc(t)}">${esc(t)}</button>`)
+  ].join('');
+
+  document.querySelectorAll('[data-sidecat]').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.sidecat===selectedCategory)
+  });
+
+  let filtered=items.filter(x=>{
+    const hay=[x.title,x.category,(x.tags||[]).join(' '),x.prompt,x.uc,x.char1Name,x.char1Prompt,x.char1Uc,x.char2Name,x.char2Prompt,x.char2Uc,x.note].join(' ').toLowerCase();
+    return (!q||hay.includes(q))
+      &&(!selectedCategory||x.category===selectedCategory)
+      &&(!selectedTag||(x.tags||[]).includes(selectedTag))
+  });
+
+  const dir=sortDesc?-1:1;
+  filtered.sort((a,b)=>{
+    if(sort==='name') return a.title.localeCompare(b.title,'ko')*dir;
+    if(sort==='created') return ((a.createdAt||0)-(b.createdAt||0))*dir;
+    if(sort==='favorite') return ((Number(a.favorite)-Number(b.favorite))||((a.updatedAt||0)-(b.updatedAt||0)))*dir;
+    return ((a.updatedAt||0)-(b.updatedAt||0))*dir  });
+
+  $('countText').textContent=` · ${filtered.length} posts`;
+
+  const grid=$('grid');
+  if(!filtered.length){
+    grid.innerHTML=`<div class="empty"><div>아직 저장된 항목이 없습니다.<br><br><button class="btn primary" id="emptyAdd">+ 새 항목 만들기</button></div></div>`;
+    $('emptyAdd')?.addEventListener('click',()=>openEdit());
+    return
+  }
+
+  grid.innerHTML=filtered.map(item=>`
+    <article class="card" data-id="${item.id}">
+      <div class="thumb" data-open="${item.id}">
+        ${item.image
+          ? `<img src="${item.image}" alt="${esc(item.title)}">`
+          : `<div class="thumb-empty">${esc(item.category)}<br>no image</div>`
+        }
+        <button class="favorite ${item.favorite?'on':''}" data-fav="${item.id}" title="즐겨찾기">${item.favorite?'♥':'♡'}</button>
+        <button class="quick-copy" data-copy="${item.id}">전체 복사</button>
+      </div>
+
+      <div class="card-body" data-open="${item.id}">
+        <div class="card-title">${esc(item.title||'제목 없음')}</div>
+        <div class="card-desc">${esc(((item.category==='커플' ? [item.char1Name,item.char2Name].filter(Boolean).join(' × ') : '') || item.note || item.prompt || '').replace(/\n/g,' '))}</div>
+        <div class="card-tags">
+          <span class="tag ${catClass(item.category)}">${esc(item.category||'기타')}</span>
+          ${(item.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+        </div>
+      </div>
+    </article>
+  `).join('')
+}
+
+function updateEditMode(){
+  const isCouple=$('categoryInput').value==='커플';
+  $('standardPromptFields').style.display=isCouple?'none':'block';
+  $('couplePromptFields').style.display=isCouple?'block':'none';
+}
+
+function openEdit(item=null){
+  editingId=item?.id||null;
+  currentImage=item?.image||'';
+
+  $('editTitle').textContent=item?'항목 수정':'새 항목';
+  $('titleInput').value=item?.title||'';
+  const normalizedCategory=item?.category==='공용 UC'?'기타':(item?.category||'캐릭터');
+  $('categoryInput').value=normalizedCategory;
+  $('tagsInput').value=(item?.tags||[]).join(', ');
+  $('promptInput').value=item?.prompt||'';
+  $('ucInput').value=item?.uc||'';
+  $('char1NameInput').value=item?.char1Name||'';
+  $('char1PromptInput').value=item?.char1Prompt||(item?.category==='커플'?item?.prompt||'':'');
+  $('char1UcInput').value=item?.char1Uc||(item?.category==='커플'?item?.uc||'':'');
+  $('char2NameInput').value=item?.char2Name||'';
+  $('char2PromptInput').value=item?.char2Prompt||'';
+  $('char2UcInput').value=item?.char2Uc||'';
+  $('noteInput').value=item?.note||'';
+  updateEditMode();
+  $('imageInput').value='';
+
+  const p=$('imagePreview');
+  if(currentImage){p.src=currentImage;p.style.display='block'}
+  else{p.removeAttribute('src');p.style.display='none'}
+
+  $('editModal').classList.add('open')
+}
+function closeModal(id){$(id).classList.remove('open')}
+
+async function openDetail(id){
+  const item=(await getAll()).find(x=>x.id===id);
+  if(!item)return;
+
+  $('detailBody').innerHTML=`
+    <div class="detail-layout">
+      <div class="detail-image">
+        ${item.image?`<img src="${item.image}" alt="${esc(item.title)}">`:`<div class="thumb-empty">no image</div>`}
+      </div>
+
+      <div class="detail-info">
+        <h3>${esc(item.title)}</h3>
+
+        <div class="detail-meta">
+          <span class="tag ${catClass(item.category)}">${esc(item.category)}</span>
+          ${(item.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+        </div>
+
+        ${item.category==='커플'?`
+          <section class="prompt-section">
+            <div class="prompt-head">
+              <b>CHARACTER 1${item.char1Name?` · ${esc(item.char1Name)}`:''}</b>
+              <button class="btn" data-dcopy="char1">캐릭터 1 전체 복사</button>
+            </div>
+            ${item.char1Prompt?`<div class="prompt-head"><b>PROMPT</b><button class="btn" data-dcopy="char1Prompt">복사</button></div><div class="prompt-box">${esc(item.char1Prompt)}</div>`:''}
+            ${item.char1Uc?`<div class="prompt-head" style="margin-top:8px"><b>UC</b><button class="btn" data-dcopy="char1Uc">복사</button></div><div class="prompt-box">${esc(item.char1Uc)}</div>`:''}
+          </section>
+
+          <section class="prompt-section">
+            <div class="prompt-head">
+              <b>CHARACTER 2${item.char2Name?` · ${esc(item.char2Name)}`:''}</b>
+              <button class="btn" data-dcopy="char2">캐릭터 2 전체 복사</button>
+            </div>
+            ${item.char2Prompt?`<div class="prompt-head"><b>PROMPT</b><button class="btn" data-dcopy="char2Prompt">복사</button></div><div class="prompt-box">${esc(item.char2Prompt)}</div>`:''}
+            ${item.char2Uc?`<div class="prompt-head" style="margin-top:8px"><b>UC</b><button class="btn" data-dcopy="char2Uc">복사</button></div><div class="prompt-box">${esc(item.char2Uc)}</div>`:''}
+          </section>
+        `:`
+          ${item.prompt?`
+            <section class="prompt-section">
+              <div class="prompt-head">
+                <b>MAIN PROMPT</b>
+                <button class="btn" data-dcopy="prompt">복사</button>
+              </div>
+              <div class="prompt-box">${esc(item.prompt)}</div>
+            </section>
+          `:''}
+
+          ${item.uc?`
+            <section class="prompt-section">
+              <div class="prompt-head">
+                <b>UC / SUB PROMPT</b>
+                <button class="btn" data-dcopy="uc">복사</button>
+              </div>
+              <div class="prompt-box">${esc(item.uc)}</div>
+            </section>
+          `:''}
+        `}
+
+        ${item.note?`
+          <section class="prompt-section">
+            <div class="prompt-head"><b>MEMO</b></div>
+            <div class="note-box">${esc(item.note)}</div>
+          </section>
+        `:''}
+
+        <div class="detail-actions">
+          <button class="btn dark" data-dcopy="all">전체 프롬프트 복사</button>
+          <button class="btn" id="detailEdit">수정</button>
+          <button class="btn danger" id="detailDelete">삭제</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('detailModal').classList.add('open');
+
+  $('detailBody').querySelectorAll('[data-dcopy]').forEach(btn=>{
+    btn.onclick=()=>{
+      const type=btn.dataset.dcopy;
+      const value=
+        type==='prompt'?item.prompt:
+        type==='uc'?item.uc:
+        type==='char1'?composeCharacter(item,1):
+        type==='char2'?composeCharacter(item,2):
+        type==='char1Prompt'?item.char1Prompt:
+        type==='char1Uc'?item.char1Uc:
+        type==='char2Prompt'?item.char2Prompt:
+        type==='char2Uc'?item.char2Uc:
+        composeAll(item);
+      copyText(value||'')
+    }
+  });
+
+  $('detailEdit').onclick=()=>{
+    closeModal('detailModal');
+    openEdit(item)
+  };
+
+  $('detailDelete').onclick=async()=>{
+    if(confirm(`"${item.title}"을(를) 삭제할까요?`)){
+      await remove(item.id);
+      closeModal('detailModal');
+      render();
+      toast('삭제했습니다.')
+    }
+  }
+}
+
+/* 카드 클릭 */
+$('grid').addEventListener('click',async e=>{
+  const fav=e.target.closest('[data-fav]');
+  if(fav){
+    e.stopPropagation();
+    const item=(await getAll()).find(x=>x.id===fav.dataset.fav);
+    if(!item)return;
+    item.favorite=!item.favorite;
+    item.updatedAt=Date.now();
+    await put(item);
+    render();
+    return
+  }
+
+  const cp=e.target.closest('[data-copy]');
+  if(cp){
+    e.stopPropagation();
+    const item=(await getAll()).find(x=>x.id===cp.dataset.copy);
+    if(item) copyText(composeAll(item));
+    return
+  }
+
+  const opener=e.target.closest('[data-open]');
+  if(opener) openDetail(opener.dataset.open)
+});
+
+/* 필터 */
+$('categoryChips').addEventListener('click',e=>{
+  const b=e.target.closest('[data-cat]');
+  if(!b)return;
+  selectedCategory=b.dataset.cat;
+  render()
+});
+$('tagChips').addEventListener('click',e=>{
+  const b=e.target.closest('[data-tag]');
+  if(!b)return;
+  selectedTag=b.dataset.tag;
+  render()
+});
+document.querySelectorAll('[data-sidecat]').forEach(btn=>{
+  btn.onclick=()=>{
+    selectedCategory=btn.dataset.sidecat;
+    render()
+  }
+});
+
+/* 검색/정렬 */
+$('searchInput').addEventListener('input',render);
+$('sortSelect').addEventListener('change',render);
+$('sortDirBtn').onclick=()=>{
+  sortDesc=!sortDesc;
+  $('sortDirBtn').textContent=sortDesc?'⇅':'⇵';
+  render()
+};
+
+/* 커플 입력폼 전환 */
+$('categoryInput').addEventListener('change',updateEditMode);
+
+/* 모달 공통 */
+$('addBtn').onclick=()=>openEdit();
+document.querySelectorAll('[data-close]').forEach(btn=>{
+  btn.onclick=()=>closeModal(btn.dataset.close)
+});
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})
+});
+
+/* 이미지 */
+$('imageInput').addEventListener('change',e=>{
+  const f=e.target.files?.[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    currentImage=r.result;
+    $('imagePreview').src=currentImage;
+    $('imagePreview').style.display='block'
+  };
+  r.readAsDataURL(f)
+});
+
+/* 저장 */
+$('saveBtn').onclick=async()=>{
+  const title=$('titleInput').value.trim();
+  if(!title){alert('제목을 입력해주세요.');return}
+
+  const old=editingId?(await getAll()).find(x=>x.id===editingId):null;
+  const now=Date.now();
+
+  const category=$('categoryInput').value;
+  const isCouple=category==='커플';
+
+  await put({
+    id:editingId||crypto.randomUUID(),
+    title,
+    category,
+    tags:$('tagsInput').value.split(',').map(x=>x.trim()).filter(Boolean),
+    image:currentImage,
+    prompt:isCouple?'':$('promptInput').value.trim(),
+    uc:isCouple?'':$('ucInput').value.trim(),
+    char1Name:isCouple?$('char1NameInput').value.trim():'',
+    char1Prompt:isCouple?$('char1PromptInput').value.trim():'',
+    char1Uc:isCouple?$('char1UcInput').value.trim():'',
+    char2Name:isCouple?$('char2NameInput').value.trim():'',
+    char2Prompt:isCouple?$('char2PromptInput').value.trim():'',
+    char2Uc:isCouple?$('char2UcInput').value.trim():'',
+    note:$('noteInput').value.trim(),
+    favorite:old?.favorite||false,
+    createdAt:old?.createdAt||now,
+    updatedAt:now
+  });
+
+  closeModal('editModal');
+  editingId=null;
+  currentImage='';
+  render();
+  toast('저장했습니다.')
+};
+
+/* 백업 */
+async function exportBackup(){
+  const payload={
+    version:5,
+    exportedAt:new Date().toISOString(),
+    settings,
+    items:await getAll()
+  };
+
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`prompt-minihome-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000)
+}
+$('exportBtn').onclick=exportBackup;
+$('backupSide').onclick=exportBackup;
+
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=async e=>{
+  const file=e.target.files?.[0];
+  if(!file)return;
+
+  try{
+    const parsed=JSON.parse(await file.text());
+    const items=Array.isArray(parsed)?parsed:parsed.items;
+    if(!Array.isArray(items))throw new Error();
+
+    if(!confirm(`${items.length}개 항목을 현재 아카이브에 합쳐서 복구할까요?`))return;
+
+    for(const item of items){
+      if(!item.id)item.id=crypto.randomUUID();
+      await put(item)
+    }
+
+    if(parsed.settings){
+      settings={
+        ...DEFAULT_SETTINGS,
+        ...parsed.settings,
+        theme:{...DEFAULT_THEME,...(parsed.settings.theme||{})}
+      };
+      saveSettings()
+    }
+
+    render();
+    toast('복구했습니다.')
+  }catch{
+    alert('올바른 백업 JSON이 아닙니다.')
+  }finally{
+    e.target.value=''
+  }
+};
+
+/* 설정 */
+const THEME_INPUTS={
+  page:'colorPage',
+  shell:'colorShell',
+  text:'colorText',
+  muted:'colorMuted',
+  line:'colorLine',
+  accent:'colorAccent',
+  accent2:'colorAccent2',
+  accent3:'colorAccent3'
+};
+
+function fillSettings(){
+  $('settingProfileName').value=settings.profileName||'';
+  $('settingProfileIntro').value=settings.profileIntro||'';
+  $('settingProfileStatus').value=settings.profileStatus||'';
+  $('settingTitle').value=settings.title||'';
+  $('settingSub').value=settings.sub||'';
+  $('bannerPosX').value=Number(settings.bannerPosX ?? 50);
+  $('bannerPosY').value=Number(settings.bannerPosY ?? 50);
+  $('bannerSizeMode').value=settings.bannerSizeMode || 'cover';
+  $('bannerHeight').value=Number(settings.bannerHeight ?? 220);
+  $('bannerHeightValue').textContent=`${$('bannerHeight').value}px`;
+  $('bannerPosXValue').textContent=`${$('bannerPosX').value}%`;
+  $('bannerPosYValue').textContent=`${$('bannerPosY').value}%`;
+
+  for(const [key,id] of Object.entries(THEME_INPUTS)){
+    $(id).value=settings.theme[key]
+  }
+
+  const bp=$('bannerPreview'),ap=$('avatarPreview');
+  if(settings.banner){bp.src=settings.banner;bp.style.display='block'}
+  else bp.style.display='none';
+
+  if(settings.avatar){ap.src=settings.avatar;ap.style.display='block'}
+  else ap.style.display='none'
+}
+
+$('settingsBtn').onclick=()=>{
+  fillSettings();
+  $('settingsModal').classList.add('open')
+};
+
+for(const [key,id] of Object.entries(THEME_INPUTS)){
+  $(id).addEventListener('input',()=>{
+    settings.theme[key]=$(id).value;
+    saveSettings()
+  })
+}
+
+
+function syncBannerPositionPreview(){
+  settings.bannerPosX=Number($('bannerPosX').value);
+  settings.bannerPosY=Number($('bannerPosY').value);
+  settings.bannerSizeMode=$('bannerSizeMode').value;
+  settings.bannerHeight=Number($('bannerHeight').value);
+  settings.bannerHeight=Number($('bannerHeight').value);
+  $('bannerPosXValue').textContent=`${settings.bannerPosX}%`;
+  $('bannerPosYValue').textContent=`${settings.bannerPosY}%`;
+  $('bannerHeightValue').textContent=`${settings.bannerHeight}px`;
+  saveSettings();
+}
+$('bannerPosX').addEventListener('input',syncBannerPositionPreview);
+$('bannerPosY').addEventListener('input',syncBannerPositionPreview);
+$('bannerSizeMode').addEventListener('change',syncBannerPositionPreview);
+$('bannerHeight').addEventListener('input',syncBannerPositionPreview);
+
+function bindImageInput(inputId,previewId,key){
+  $(inputId).addEventListener('change',e=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      settings[key]=r.result;
+      $(previewId).src=r.result;
+      $(previewId).style.display='block';
+      saveSettings()
+    };
+    r.readAsDataURL(file)
+  })
+}
+bindImageInput('bannerInput','bannerPreview','banner');
+bindImageInput('avatarInput','avatarPreview','avatar');
+
+$('saveSettingsBtn').onclick=()=>{
+  settings.profileName=$('settingProfileName').value.trim()||'nickname';
+  settings.profileIntro=$('settingProfileIntro').value.trim();
+  settings.profileStatus=$('settingProfileStatus').value.trim();
+  settings.title=$('settingTitle').value.trim()||'Prompt Archive';
+  settings.sub=$('settingSub').value.trim();
+  settings.bannerPosX=Number($('bannerPosX').value);
+  settings.bannerPosY=Number($('bannerPosY').value);
+  settings.bannerSizeMode=$('bannerSizeMode').value;
+
+  for(const [key,id] of Object.entries(THEME_INPUTS)){
+    settings.theme[key]=$(id).value
+  }
+
+  saveSettings();
+  closeModal('settingsModal');
+  toast('꾸미기를 저장했습니다.')
+};
+
+$('resetThemeBtn').onclick=()=>{
+  settings=structuredClone(DEFAULT_SETTINGS);
+  saveSettings();
+  closeModal('settingsModal');
+  toast('기본 디자인으로 돌렸습니다.')
+};
+
+openDB()
+  .then(async()=>{
+    const stored=await loadSettingsDB();
+    if(stored){
+      settings={...DEFAULT_SETTINGS,...stored,theme:{...DEFAULT_THEME,...(stored.theme||{})}};
+    }else{
+      await persistSettingsDB(structuredClone(settings));
+    }
+    await migrateLegacyItems();
+    applySettings();
+    render()
+  })
+  .catch(err=>{
+    console.error(err);
+    alert('브라우저 저장소를 열 수 없습니다.')
+  });
+})();
+</script>
+</body>
+</html>
