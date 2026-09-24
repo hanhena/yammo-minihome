@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prompt Minihome</title>
+<style>
+html,body{height:100%;margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f2f7;color:#625d69}
+.loading{height:100%;display:grid;place-items:center;text-align:center}
+.box{padding:28px 32px;border:1px solid #ddd8e5;border-radius:16px;background:#fff;box-shadow:0 10px 28px rgba(72,66,83,.10)}
+.sub{font-size:12px;color:#9992a0;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="loading"><div class="box">Prompt Minihome 불러오는 중…<div class="sub">잠시만 기다려 주세요.</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+(async()=>{
+  try{
+    const res=await fetch('./Prompt_Minihome_GitHub_Pages_v4.zip',{cache:'no-store'});
+    if(!res.ok) throw new Error('ZIP 다운로드 실패: '+res.status);
+    const zip=await JSZip.loadAsync(await res.arrayBuffer());
+    const candidates=Object.keys(zip.files).filter(n=>/(^|\/)index\.html$/i.test(n));
+    if(!candidates.length) throw new Error('ZIP 안에서 index.html을 찾지 못했습니다.');
+    const page=await zip.file(candidates[0]).async('string');
+    document.open();
+    document.write(page);
+    document.close();
+  }catch(e){
+    document.body.innerHTML='<div class="loading"><div class="box"><b>페이지를 불러오지 못했습니다.</b><div class="sub">'+String(e.message||e)+'</div></div></div>';
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
