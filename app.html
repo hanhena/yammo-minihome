@@ -493,7 +493,8 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
             <span class="count" id="countText"></span>
           </div>
           <div class="board-actions">
-            <button class="btn primary" id="addBtn">+ 새 항목</button>
+            <button class="btn primary" id="addBtn">+ 프롬프트</button>
+            <button class="btn" id="textAddBtn">+ 텍스트</button>
             <button class="btn" id="exportBtn">백업</button>
             <button class="btn" id="importBtn">복구</button>
             <input type="file" id="importFile" accept=".json,application/json" hidden />
@@ -528,7 +529,6 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
             <option value="커플">커플</option>
             <option value="기본 프롬프트">기본 프롬프트</option>
             <option value="장면">장면</option>
-            <option value="텍스트 노트">텍스트 노트</option>
             <option value="기타">기타</option>
           </select>
         </div>
@@ -543,19 +543,6 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
           <div class="image-picker">
             <input type="file" id="imageInput" accept="image/*" />
             <img class="preview" id="imagePreview" alt="미리보기" />
-          </div>
-        </div>
-
-        <div id="textNoteFields" class="field full" style="display:none">
-          <div class="mini-field-grid">
-            <div class="field">
-              <label>노트 종류</label>
-              <input type="text" id="textTypeInput" placeholder="예: OOC / 유저노트 / 장기기억 / 설정메모" />
-            </div>
-          </div>
-          <div class="field full">
-            <label>내용</label>
-            <textarea id="textContentInput" style="min-height:320px" placeholder="백업할 OOC, 유저노트, 설정 텍스트 등을 그대로 붙여넣으세요."></textarea>
           </div>
         </div>
 
@@ -649,6 +636,40 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
     <div class="dialog-foot">
       <button class="btn" data-close="editModal">취소</button>
       <button class="btn primary" id="saveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 텍스트 노트 편집 -->
+<div class="modal" id="textEditModal">
+  <div class="dialog">
+    <div class="dialog-topline"></div>
+    <div class="dialog-head">
+      <h2 id="textEditTitle">텍스트 추가</h2>
+      <button class="btn" data-close="textEditModal">close</button>
+    </div>
+    <div class="dialog-body">
+      <div class="form-grid">
+        <div class="field">
+          <label>제목</label>
+          <input type="text" id="textTitleInput" placeholder="예: 권이진 유저노트" />
+        </div>
+
+        <div class="field">
+          <label>소분류</label>
+          <input type="text" id="textSubcategoryInput" placeholder="예: OOC / 유저노트 / 장기기억" />
+        </div>
+
+        <div class="field full">
+          <label>내용</label>
+          <textarea id="textOnlyContentInput" style="min-height:420px" placeholder="백업할 텍스트를 그대로 붙여넣으세요."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="dialog-foot">
+      <button class="btn" data-close="textEditModal">취소</button>
+      <button class="btn primary" id="saveTextBtn">저장</button>
     </div>
   </div>
 </div>
@@ -839,6 +860,7 @@ const DEFAULT_SETTINGS={
 
 let db;
 let editingId=null;
+let textEditingId=null;
 let currentImage='';
 let selectedCategory='';
 let selectedTag='';
@@ -1051,7 +1073,7 @@ async function render(){
   const grid=$('grid');
   if(!filtered.length){
     grid.innerHTML=`<div class="empty"><div>아직 저장된 항목이 없습니다.<br><br><button class="btn primary" id="emptyAdd">+ 새 항목 만들기</button></div></div>`;
-    $('emptyAdd')?.addEventListener('click',()=>openEdit());
+    $('emptyAdd')?.addEventListener('click',()=>selectedCategory==='텍스트 노트'?openTextEdit():openEdit());
     return
   }
 
@@ -1065,10 +1087,6 @@ async function render(){
           </div>
           <div class="text-note-title">${esc(item.title||'제목 없음')}</div>
           <div class="text-note-preview">${esc(item.textContent||'')}</div>
-          <div class="card-tags">
-            <span class="tag cat-text">텍스트 노트</span>
-            ${(item.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
-          </div>
           <div class="text-note-copy"><button class="btn" data-copy="${item.id}">전체 복사</button></div>
         </article>
       `;
@@ -1099,13 +1117,10 @@ async function render(){
 }
 
 function updateEditMode(){
-  const category=$('categoryInput').value;
-  const isCouple=category==='커플';
-  const isTextNote=category==='텍스트 노트';
-  $('imageField').style.display=isTextNote?'none':'flex';
-  $('standardPromptFields').style.display=(isCouple||isTextNote)?'none':'block';
+  const isCouple=$('categoryInput').value==='커플';
+  $('imageField').style.display='flex';
+  $('standardPromptFields').style.display=isCouple?'none':'block';
   $('couplePromptFields').style.display=isCouple?'block':'none';
-  $('textNoteFields').style.display=isTextNote?'block':'none';
 }
 
 function openEdit(item=null){
@@ -1117,8 +1132,6 @@ function openEdit(item=null){
   const normalizedCategory=item?.category==='공용 UC'?'기타':(item?.category||'캐릭터');
   $('categoryInput').value=normalizedCategory;
   $('tagsInput').value=(item?.tags||[]).join(', ');
-  $('textTypeInput').value=item?.textType||'';
-  $('textContentInput').value=item?.textContent||'';
   $('promptInput').value=item?.prompt||'';
   $('ucInput').value=item?.uc||'';
   $('mainLabelInput').value=item?.mainLabel||'';
@@ -1148,6 +1161,16 @@ function openEdit(item=null){
 }
 function closeModal(id){$(id).classList.remove('open')}
 
+function openTextEdit(item=null){
+  textEditingId=item?.id||null;
+  $('textEditTitle').textContent=item?'텍스트 수정':'텍스트 추가';
+  $('textTitleInput').value=item?.title||'';
+  $('textSubcategoryInput').value=item?.textType||'';
+  $('textOnlyContentInput').value=item?.textContent||'';
+  $('textEditModal').classList.add('open');
+  setTimeout(()=>$('textTitleInput').focus(),30);
+}
+
 async function openDetail(id){
   const item=(await getAll()).find(x=>x.id===id);
   if(!item)return;
@@ -1158,9 +1181,7 @@ async function openDetail(id){
         <div class="detail-info">
           <h3>${esc(item.title)}</h3>
           <div class="detail-meta">
-            <span class="tag cat-text">텍스트 노트</span>
-            ${item.textType?`<span class="tag">${esc(item.textType)}</span>`:''}
-            ${(item.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+            ${item.textType?`<span class="tag cat-text">${esc(item.textType)}</span>`:''}
           </div>
           <section class="prompt-section">
             <div class="prompt-head">
@@ -1184,7 +1205,7 @@ async function openDetail(id){
     `;
     $('detailModal').classList.add('open');
     $('textNoteCopy').onclick=()=>copyText(item.textContent||'');
-    $('detailEdit').onclick=()=>{closeModal('detailModal');openEdit(item)};
+    $('detailEdit').onclick=()=>{closeModal('detailModal');openTextEdit(item)};
     $('detailDelete').onclick=async()=>{
       if(confirm(`"${item.title}"을(를) 삭제할까요?`)){
         await remove(item.id);
@@ -1413,12 +1434,62 @@ $('extraOutfitRows').addEventListener('click',e=>{
 
 /* 모달 공통 */
 $('addBtn').onclick=()=>openEdit();
+$('textAddBtn').onclick=()=>openTextEdit();
 document.querySelectorAll('[data-close]').forEach(btn=>{
   btn.onclick=()=>closeModal(btn.dataset.close)
 });
 document.querySelectorAll('.modal').forEach(m=>{
   m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})
 });
+
+/* 텍스트 노트 저장 */
+$('saveTextBtn').onclick=async()=>{
+  const title=$('textTitleInput').value.trim();
+  const textType=$('textSubcategoryInput').value.trim();
+  const textContent=$('textOnlyContentInput').value.trim();
+
+  if(!title){alert('제목을 입력해주세요.');return}
+  if(!textType){alert('소분류를 입력해주세요.');return}
+
+  const old=textEditingId?(await getAll()).find(x=>x.id===textEditingId):null;
+  const now=Date.now();
+
+  await put({
+    id:textEditingId||crypto.randomUUID(),
+    title,
+    category:'텍스트 노트',
+    tags:[],
+    image:'',
+    textType,
+    textContent,
+    prompt:'',
+    uc:'',
+    mainLabel:'',
+    ucLabel:'',
+    outfit1Label:'',
+    outfit1Prompt:'',
+    outfit2Label:'',
+    outfit2Prompt:'',
+    outfit3Label:'',
+    outfit3Prompt:'',
+    extraOutfits:[],
+    char1Name:'',
+    char1Prompt:'',
+    char1Uc:'',
+    char2Name:'',
+    char2Prompt:'',
+    char2Uc:'',
+    note:'',
+    favorite:old?.favorite||false,
+    createdAt:old?.createdAt||now,
+    updatedAt:now
+  });
+
+  closeModal('textEditModal');
+  textEditingId=null;
+  render();
+  toast('텍스트를 저장했습니다.')
+};
 
 /* 이미지 */
 $('imageInput').addEventListener('change',e=>{
@@ -1443,27 +1514,26 @@ $('saveBtn').onclick=async()=>{
 
   const category=$('categoryInput').value;
   const isCouple=category==='커플';
-  const isTextNote=category==='텍스트 노트';
 
   await put({
     id:editingId||crypto.randomUUID(),
     title,
     category,
     tags:$('tagsInput').value.split(',').map(x=>x.trim()).filter(Boolean),
-    image:isTextNote?'':currentImage,
-    textType:isTextNote?$('textTypeInput').value.trim():'',
-    textContent:isTextNote?$('textContentInput').value.trim():'',
-    prompt:(isCouple||isTextNote)?'':$('promptInput').value.trim(),
-    uc:(isCouple||isTextNote)?'':$('ucInput').value.trim(),
-    mainLabel:(isCouple||isTextNote)?'':$('mainLabelInput').value.trim(),
-    ucLabel:(isCouple||isTextNote)?'':$('ucLabelInput').value.trim(),
-    outfit1Label:(isCouple||isTextNote)?'':($('outfit1LabelInput').value.trim()||'의상 1'),
-    outfit1Prompt:(isCouple||isTextNote)?'':$('outfit1PromptInput').value.trim(),
-    outfit2Label:(isCouple||isTextNote)?'':($('outfit2LabelInput').value.trim()||'의상 2'),
-    outfit2Prompt:(isCouple||isTextNote)?'':$('outfit2PromptInput').value.trim(),
-    outfit3Label:(isCouple||isTextNote)?'':($('outfit3LabelInput').value.trim()||'의상 3'),
-    outfit3Prompt:(isCouple||isTextNote)?'':$('outfit3PromptInput').value.trim(),
-    extraOutfits:(isCouple||isTextNote)?[]:collectExtraOutfits(),
+    image:currentImage,
+    textType:'',
+    textContent:'',
+    prompt:isCouple?'':$('promptInput').value.trim(),
+    uc:isCouple?'':$('ucInput').value.trim(),
+    mainLabel:isCouple?'':$('mainLabelInput').value.trim(),
+    ucLabel:isCouple?'':$('ucLabelInput').value.trim(),
+    outfit1Label:isCouple?'':($('outfit1LabelInput').value.trim()||'의상 1'),
+    outfit1Prompt:isCouple?'':$('outfit1PromptInput').value.trim(),
+    outfit2Label:isCouple?'':($('outfit2LabelInput').value.trim()||'의상 2'),
+    outfit2Prompt:isCouple?'':$('outfit2PromptInput').value.trim(),
+    outfit3Label:isCouple?'':($('outfit3LabelInput').value.trim()||'의상 3'),
+    outfit3Prompt:isCouple?'':$('outfit3PromptInput').value.trim(),
+    extraOutfits:isCouple?[]:collectExtraOutfits(),
     char1Name:isCouple?$('char1NameInput').value.trim():'',
     char1Prompt:isCouple?$('char1PromptInput').value.trim():'',
     char1Uc:isCouple?$('char1UcInput').value.trim():'',
