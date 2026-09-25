@@ -337,6 +337,11 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
 .outfit-display{display:none}
 .outfit-display.active{display:block}
 .select-copy-row{display:flex;justify-content:flex-end;margin-top:7px}
+.extra-outfit-row{display:grid;grid-template-columns:130px 1fr auto;gap:8px;margin:7px 0;align-items:start}
+.extra-outfit-row input,.extra-outfit-row textarea{width:100%}
+.extra-outfit-row textarea{min-height:72px}
+.outfit-toolbar{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}
+@media(max-width:700px){.extra-outfit-row{grid-template-columns:1fr}}
 @media(max-width:700px){.mini-field-grid,.outfit-edit-row{grid-template-columns:1fr}}
 
 /* settings */
@@ -563,7 +568,11 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
               <input type="text" id="outfit3LabelInput" placeholder="의상 3" />
               <textarea id="outfit3PromptInput" placeholder="세 번째 선택 프롬프트"></textarea>
             </div>
-            <div class="color-hint">이름은 카드별로 독립 저장돼요. 예: 한복 / 잠옷 / 정장처럼 바꿔도 다른 카드에는 영향이 없어요.</div>
+            <div id="extraOutfitRows"></div>
+            <div class="outfit-toolbar">
+              <button type="button" class="btn" id="addOutfitBtn">+ 선택 추가</button>
+            </div>
+            <div class="color-hint">3개 이후에도 원하는 만큼 추가할 수 있어요. 각 이름은 이 카드에만 저장됩니다.</div>
           </div>
         </div>
 
@@ -883,6 +892,36 @@ function composeCharacter(item,n){
   if(uc) arr.push(`[UC]\n${uc}`);
   return arr.length>1?arr.join('\n\n'):'';
 }
+function getOutfitVariants(item){
+  const base=[1,2,3].map(n=>({
+    label:(item?.[`outfit${n}Label`]||`의상 ${n}`).trim(),
+    prompt:(item?.[`outfit${n}Prompt`]||'').trim()
+  })).filter(v=>v.prompt);
+  const extra=(Array.isArray(item?.extraOutfits)?item.extraOutfits:[])
+    .map((v,i)=>({label:(v?.label||`의상 ${i+4}`).trim(),prompt:(v?.prompt||'').trim()}))
+    .filter(v=>v.prompt);
+  return [...base,...extra];
+}
+let extraOutfitSeq=0;
+function extraOutfitRowHtml(data={}){
+  extraOutfitSeq+=1;
+  const displayNo=extraOutfitSeq+3;
+  return '<div class="extra-outfit-row" data-extra-outfit="'+extraOutfitSeq+'">'+
+    '<input type="text" class="extra-outfit-label" placeholder="의상 '+displayNo+'" value="'+esc(data.label||('의상 '+displayNo))+'" />'+
+    '<textarea class="extra-outfit-prompt" placeholder="선택 프롬프트를 입력하세요">'+esc(data.prompt||'')+'</textarea>'+
+    '<button type="button" class="btn" data-remove-extra-outfit>삭제</button>'+
+    '</div>';
+}
+function renderExtraOutfits(list=[]){
+  extraOutfitSeq=0;
+  $('extraOutfitRows').innerHTML=(Array.isArray(list)?list:[]).map(v=>extraOutfitRowHtml(v)).join('');
+}
+function collectExtraOutfits(){
+  return [...document.querySelectorAll('#extraOutfitRows .extra-outfit-row')].map((row,i)=>({
+    label:row.querySelector('.extra-outfit-label').value.trim()||`의상 ${i+4}`,
+    prompt:row.querySelector('.extra-outfit-prompt').value.trim()
+  })).filter(v=>v.label||v.prompt);
+}
 function composeAll(item){
   if(item.category==='커플'){
     return [composeCharacter(item,1),composeCharacter(item,2)].filter(Boolean).join('\n\n');
@@ -1035,6 +1074,7 @@ function openEdit(item=null){
   $('outfit2PromptInput').value=item?.outfit2Prompt||'';
   $('outfit3LabelInput').value=item?.outfit3Label||'의상 3';
   $('outfit3PromptInput').value=item?.outfit3Prompt||'';
+  renderExtraOutfits(item?.extraOutfits||[]);
   $('char1NameInput').value=item?.char1Name||'';
   $('char1PromptInput').value=item?.char1Prompt||(item?.category==='커플'?item?.prompt||'':'');
   $('char1UcInput').value=item?.char1Uc||(item?.category==='커플'?item?.uc||'':'');
@@ -1111,19 +1151,19 @@ async function openDetail(id){
           `:''}
 
 
-          ${[1,2,3].some(n=>item[`outfit${n}Prompt`]?.trim())?`
+          ${getOutfitVariants(item).length?`
             <section class="prompt-section">
               <div class="prompt-head">
                 <b>SELECT PROMPT</b>
               </div>
               <div class="outfit-tabs">
-                ${[1,2,3].filter(n=>item[`outfit${n}Prompt`]?.trim()).map((n,idx)=>`
-                  <button class="outfit-tab ${idx===0?"active":""}" data-outfit-tab="${n}">${esc(item[`outfit${n}Label`]||`의상 ${n}`)}</button>
+                ${getOutfitVariants(item).map((v,idx)=>`
+                  <button class="outfit-tab ${idx===0?"active":""}" data-outfit-tab="${idx}">${esc(v.label||`의상 ${idx+1}`)}</button>
                 `).join('')}
               </div>
-              ${[1,2,3].filter(n=>item[`outfit${n}Prompt`]?.trim()).map((n,idx)=>`
-                <div class="outfit-display ${idx===0?"active":""}" data-outfit-panel="${n}">
-                  <div class="prompt-box">${esc(item[`outfit${n}Prompt`])}</div>
+              ${getOutfitVariants(item).map((v,idx)=>`
+                <div class="outfit-display ${idx===0?"active":""}" data-outfit-panel="${idx}">
+                  <div class="prompt-box">${esc(v.prompt)}</div>
                 </div>
               `).join('')}
               <div class="select-copy-row">\n                <button class="btn" id="copySelectedOutfit">현재 선택 복사</button>\n              </div>\n            </section>
@@ -1178,7 +1218,8 @@ async function openDetail(id){
     }
   });
 
-  let selectedOutfit=[1,2,3].find(n=>item[`outfit${n}Prompt`]?.trim())||null;
+  const outfitVariants=getOutfitVariants(item);
+  let selectedOutfit=outfitVariants.length?0:null;
   $('detailBody').querySelectorAll('[data-outfit-tab]').forEach(btn=>{
     btn.onclick=()=>{
       selectedOutfit=Number(btn.dataset.outfitTab);
@@ -1187,7 +1228,7 @@ async function openDetail(id){
     }
   });
   const copySelected=$('detailBody').querySelector('#copySelectedOutfit');
-  if(copySelected){copySelected.onclick=()=>{if(selectedOutfit)copyText(item[`outfit${selectedOutfit}Prompt`]||'')}}
+  if(copySelected){copySelected.onclick=()=>{if(selectedOutfit!==null)copyText(outfitVariants[selectedOutfit]?.prompt||'')}}
 
   $('detailEdit').onclick=()=>{
     closeModal('detailModal');
@@ -1261,6 +1302,15 @@ $('sortDirBtn').onclick=()=>{
 
 /* 커플 입력폼 전환 */
 $('categoryInput').addEventListener('change',updateEditMode);
+$('addOutfitBtn').onclick=()=>{
+  const current=document.querySelectorAll('#extraOutfitRows .extra-outfit-row').length;
+  $('extraOutfitRows').insertAdjacentHTML('beforeend',extraOutfitRowHtml({label:`의상 ${current+4}`,prompt:''}));
+};
+$('extraOutfitRows').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-remove-extra-outfit]');
+  if(!btn)return;
+  btn.closest('.extra-outfit-row')?.remove();
+});
 
 /* 모달 공통 */
 $('addBtn').onclick=()=>openEdit();
@@ -1311,6 +1361,7 @@ $('saveBtn').onclick=async()=>{
     outfit2Prompt:isCouple?'':$('outfit2PromptInput').value.trim(),
     outfit3Label:isCouple?'':($('outfit3LabelInput').value.trim()||'의상 3'),
     outfit3Prompt:isCouple?'':$('outfit3PromptInput').value.trim(),
+    extraOutfits:isCouple?[]:collectExtraOutfits(),
     char1Name:isCouple?$('char1NameInput').value.trim():'',
     char1Prompt:isCouple?$('char1PromptInput').value.trim():'',
     char1Uc:isCouple?$('char1UcInput').value.trim():'',
