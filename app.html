@@ -322,6 +322,21 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
 .couple-box textarea{min-height:105px}
 @media(max-width:700px){.couple-grid{grid-template-columns:1fr}}
 
+/* per-card custom labels + selectable variants */
+.mini-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.outfit-editor{margin-top:12px;border-top:1px dashed #ddd8e2;padding-top:10px}
+.outfit-editor-title{font-size:10px;font-weight:800;color:#77717d;margin-bottom:7px}
+.outfit-editor-title::before{content:"♡ ";color:#b7a8c9}
+.outfit-edit-row{display:grid;grid-template-columns:130px 1fr;gap:8px;margin:7px 0;align-items:start}
+.outfit-edit-row input,.outfit-edit-row textarea{width:100%}
+.outfit-edit-row textarea{min-height:72px}
+.outfit-tabs{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 8px}
+.outfit-tab{border:1px solid #dcd7e2;background:#fff;color:#7b7481;border-radius:8px;padding:6px 10px;font-size:9px}
+.outfit-tab.active{background:#eee9f5;border-color:#d5cae4;color:#6c607c;font-weight:800}
+.outfit-display{display:none}
+.outfit-display.active{display:block}
+@media(max-width:700px){.mini-field-grid,.outfit-edit-row{grid-template-columns:1fr}}
+
 /* settings */
 .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .color-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -376,7 +391,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
     <div class="top-deco"></div>
 
     <div class="window-head">
-      <div class="window-title">prompt_minihome.exe · v6.1</div>
+      <div class="window-title">prompt_minihome.exe · v6.2</div>
       <div class="window-actions">
         <button class="win-btn">♡</button>
         <button class="win-btn">－</button>
@@ -511,6 +526,17 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
         </div>
 
         <div id="standardPromptFields" class="field full">
+          <div class="mini-field-grid">
+            <div class="field">
+              <label>첫 번째 카테고리 이름</label>
+              <input type="text" id="mainLabelInput" placeholder="예: 캐릭터 / 외형 / 기본 프롬프트" />
+            </div>
+            <div class="field">
+              <label>두 번째 카테고리 이름</label>
+              <input type="text" id="ucLabelInput" placeholder="예: 의상 / UC / 소품" />
+            </div>
+          </div>
+
           <div class="field full">
             <label>메인 프롬프트</label>
             <textarea id="promptInput" placeholder="캐릭터 프롬프트, 작태 프롬프트, 장면 프롬프트 등을 저장하세요."></textarea>
@@ -519,6 +545,23 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
           <div class="field full" style="margin-top:10px">
             <label>UC / 보조 프롬프트</label>
             <textarea id="ucInput" placeholder="캐릭터 UC 또는 함께 보관할 보조 프롬프트"></textarea>
+          </div>
+
+          <div class="outfit-editor">
+            <div class="outfit-editor-title">선택형 프롬프트</div>
+            <div class="outfit-edit-row">
+              <input type="text" id="outfit1LabelInput" placeholder="의상 1" />
+              <textarea id="outfit1PromptInput" placeholder="첫 번째 선택 프롬프트"></textarea>
+            </div>
+            <div class="outfit-edit-row">
+              <input type="text" id="outfit2LabelInput" placeholder="의상 2" />
+              <textarea id="outfit2PromptInput" placeholder="두 번째 선택 프롬프트"></textarea>
+            </div>
+            <div class="outfit-edit-row">
+              <input type="text" id="outfit3LabelInput" placeholder="의상 3" />
+              <textarea id="outfit3PromptInput" placeholder="세 번째 선택 프롬프트"></textarea>
+            </div>
+            <div class="color-hint">이름은 카드별로 독립 저장돼요. 예: 한복 / 잠옷 / 정장처럼 바꿔도 다른 카드에는 영향이 없어요.</div>
           </div>
         </div>
 
@@ -982,6 +1025,14 @@ function openEdit(item=null){
   $('tagsInput').value=(item?.tags||[]).join(', ');
   $('promptInput').value=item?.prompt||'';
   $('ucInput').value=item?.uc||'';
+  $('mainLabelInput').value=item?.mainLabel||'';
+  $('ucLabelInput').value=item?.ucLabel||'';
+  $('outfit1LabelInput').value=item?.outfit1Label||'의상 1';
+  $('outfit1PromptInput').value=item?.outfit1Prompt||'';
+  $('outfit2LabelInput').value=item?.outfit2Label||'의상 2';
+  $('outfit2PromptInput').value=item?.outfit2Prompt||'';
+  $('outfit3LabelInput').value=item?.outfit3Label||'의상 3';
+  $('outfit3PromptInput').value=item?.outfit3Prompt||'';
   $('char1NameInput').value=item?.char1Name||'';
   $('char1PromptInput').value=item?.char1Prompt||(item?.category==='커플'?item?.prompt||'':'');
   $('char1UcInput').value=item?.char1Uc||(item?.category==='커플'?item?.uc||'':'');
@@ -1040,7 +1091,7 @@ async function openDetail(id){
           ${item.prompt?`
             <section class="prompt-section">
               <div class="prompt-head">
-                <b>MAIN PROMPT</b>
+                <b>${esc(item.mainLabel||'MAIN PROMPT')}</b>
                 <button class="btn" data-dcopy="prompt">복사</button>
               </div>
               <div class="prompt-box">${esc(item.prompt)}</div>
@@ -1050,10 +1101,30 @@ async function openDetail(id){
           ${item.uc?`
             <section class="prompt-section">
               <div class="prompt-head">
-                <b>UC / SUB PROMPT</b>
+                <b>${esc(item.ucLabel||'UC / SUB PROMPT')}</b>
                 <button class="btn" data-dcopy="uc">복사</button>
               </div>
               <div class="prompt-box">${esc(item.uc)}</div>
+            </section>
+          `:''}
+
+
+          ${[1,2,3].some(n=>item[`outfit${n}Prompt`]?.trim())?`
+            <section class="prompt-section">
+              <div class="prompt-head">
+                <b>SELECT PROMPT</b>
+                <button class="btn" id="copySelectedOutfit">선택 복사</button>
+              </div>
+              <div class="outfit-tabs">
+                ${[1,2,3].filter(n=>item[`outfit${n}Prompt`]?.trim()).map((n,idx)=>`
+                  <button class="outfit-tab ${idx===0?"active":""}" data-outfit-tab="${n}">${esc(item[`outfit${n}Label`]||`의상 ${n}`)}</button>
+                `).join('')}
+              </div>
+              ${[1,2,3].filter(n=>item[`outfit${n}Prompt`]?.trim()).map((n,idx)=>`
+                <div class="outfit-display ${idx===0?"active":""}" data-outfit-panel="${n}">
+                  <div class="prompt-box">${esc(item[`outfit${n}Prompt`])}</div>
+                </div>
+              `).join('')}
             </section>
           `:''}
         `}
@@ -1092,6 +1163,17 @@ async function openDetail(id){
       copyText(value||'')
     }
   });
+
+  let selectedOutfit=[1,2,3].find(n=>item[`outfit${n}Prompt`]?.trim())||null;
+  $('detailBody').querySelectorAll('[data-outfit-tab]').forEach(btn=>{
+    btn.onclick=()=>{
+      selectedOutfit=Number(btn.dataset.outfitTab);
+      $('detailBody').querySelectorAll('[data-outfit-tab]').forEach(x=>x.classList.toggle('active',x===btn));
+      $('detailBody').querySelectorAll('[data-outfit-panel]').forEach(x=>x.classList.toggle('active',Number(x.dataset.outfitPanel)===selectedOutfit));
+    }
+  });
+  const copySelected=$('detailBody').querySelector('#copySelectedOutfit');
+  if(copySelected){copySelected.onclick=()=>{if(selectedOutfit)copyText(item[`outfit${selectedOutfit}Prompt`]||'')}}
 
   $('detailEdit').onclick=()=>{
     closeModal('detailModal');
@@ -1207,6 +1289,14 @@ $('saveBtn').onclick=async()=>{
     image:currentImage,
     prompt:isCouple?'':$('promptInput').value.trim(),
     uc:isCouple?'':$('ucInput').value.trim(),
+    mainLabel:isCouple?'':$('mainLabelInput').value.trim(),
+    ucLabel:isCouple?'':$('ucLabelInput').value.trim(),
+    outfit1Label:isCouple?'':($('outfit1LabelInput').value.trim()||'의상 1'),
+    outfit1Prompt:isCouple?'':$('outfit1PromptInput').value.trim(),
+    outfit2Label:isCouple?'':($('outfit2LabelInput').value.trim()||'의상 2'),
+    outfit2Prompt:isCouple?'':$('outfit2PromptInput').value.trim(),
+    outfit3Label:isCouple?'':($('outfit3LabelInput').value.trim()||'의상 3'),
+    outfit3Prompt:isCouple?'':$('outfit3PromptInput').value.trim(),
     char1Name:isCouple?$('char1NameInput').value.trim():'',
     char1Prompt:isCouple?$('char1PromptInput').value.trim():'',
     char1Uc:isCouple?$('char1UcInput').value.trim():'',
