@@ -1102,7 +1102,6 @@ function updateEditMode(){
   const category=$('categoryInput').value;
   const isCouple=category==='커플';
   const isTextNote=category==='텍스트 노트';
-  const isTextNote=category==='텍스트 노트';
   $('imageField').style.display=isTextNote?'none':'flex';
   $('standardPromptFields').style.display=(isCouple||isTextNote)?'none':'block';
   $('couplePromptFields').style.display=isCouple?'block':'none';
@@ -1444,6 +1443,7 @@ $('saveBtn').onclick=async()=>{
 
   const category=$('categoryInput').value;
   const isCouple=category==='커플';
+  const isTextNote=category==='텍스트 노트';
 
   await put({
     id:editingId||crypto.randomUUID(),
