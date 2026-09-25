@@ -442,11 +442,10 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
         <div class="side-menu">
           <button class="side-btn active" data-sidecat=""><span class="ico">♡</span>전체</button>
           <button class="side-btn" data-sidecat="캐릭터"><span class="ico">♙</span>캐릭터</button>
-          <button class="side-btn" data-sidecat="커플"><span class="ico">♡</span>커플</button>
           <button class="side-btn" data-sidecat="기본 프롬프트"><span class="ico">✦</span>기본 프롬프트</button>
-          <button class="side-btn" data-sidecat="장면"><span class="ico">☆</span>장면</button>
+          <button class="side-btn" data-sidecat="장면(솔로)"><span class="ico">☆</span>장면(솔로)</button>
+          <button class="side-btn" data-sidecat="장면(커플)"><span class="ico">♡</span>장면(커플)</button>
           <button class="side-btn" data-sidecat="텍스트 노트"><span class="ico">▤</span>텍스트 노트</button>
-          <button class="side-btn" data-sidecat="기타"><span class="ico">⌂</span>기타</button>
           <button class="side-btn" id="backupSide"><span class="ico">⇩</span>백업</button>
         </div>
 
@@ -526,10 +525,9 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
           <label>종류</label>
           <select class="form-select" id="categoryInput">
             <option value="캐릭터">캐릭터</option>
-            <option value="커플">커플</option>
             <option value="기본 프롬프트">기본 프롬프트</option>
-            <option value="장면">장면</option>
-            <option value="기타">기타</option>
+            <option value="장면(솔로)">장면(솔로)</option>
+            <option value="장면(커플)">장면(커플)</option>
           </select>
         </div>
 
@@ -869,7 +867,7 @@ let settings=JSON.parse(localStorage.getItem(SETTINGS)||'null')||structuredClone
 settings={...DEFAULT_SETTINGS,...settings,theme:{...DEFAULT_THEME,...(settings.theme||{})}};
 
 const $=id=>document.getElementById(id);
-const CATEGORIES=['캐릭터','커플','기본 프롬프트','장면','텍스트 노트','기타'];
+const CATEGORIES=['캐릭터','기본 프롬프트','장면(솔로)','장면(커플)','텍스트 노트'];
 
 function openDB(){
   return new Promise((resolve,reject)=>{
@@ -906,9 +904,31 @@ function persistSettingsDB(value){
 async function migrateLegacyItems(){
   const items=await getAll();
   for(const item of items){
+    let changed=false;
+
     if(item.category==='공용 UC'){
-      item.category='기타';
+      item.category='기본 프롬프트';
       item.tags=[...new Set([...(item.tags||[]),'공용 UC'])];
+      changed=true;
+    }
+
+    if(item.category==='장면'){
+      item.category='장면(솔로)';
+      changed=true;
+    }
+
+    if(item.category==='장면(커플)'){
+      item.category='장면(커플)';
+      changed=true;
+    }
+
+    if(item.category==='기타'){
+      item.category='기본 프롬프트';
+      item.tags=[...new Set([...(item.tags||[]),'기타'])];
+      changed=true;
+    }
+
+    if(changed){
       item.updatedAt=Date.now();
       await put(item);
     }
@@ -973,7 +993,7 @@ function collectExtraOutfits(){
 }
 function composeAll(item){
   if(item.category==='텍스트 노트') return item.textContent?.trim()||'';
-  if(item.category==='커플'){
+  if(item.category==='장면(커플)'){
     return [composeCharacter(item,1),composeCharacter(item,2)].filter(Boolean).join('\n\n');
   }
   const arr=[];
@@ -983,9 +1003,9 @@ function composeAll(item){
 }
 function catClass(c){
   return c==='캐릭터'?'cat-character':
-         c==='커플'?'cat-couple':
          c==='기본 프롬프트'?'cat-base':
-         c==='장면'?'cat-scene':
+         c==='장면(솔로)'?'cat-scene':
+         c==='장면(커플)'?'cat-couple':
          c==='텍스트 노트'?'cat-text':'';
 }
 function sameDay(ts){
@@ -1105,7 +1125,7 @@ async function render(){
 
       <div class="card-body" data-open="${item.id}">
         <div class="card-title">${esc(item.title||'제목 없음')}</div>
-        <div class="card-desc">${esc(((item.category==='커플' ? [item.char1Name,item.char2Name].filter(Boolean).join(' × ') : '') || item.note || item.prompt || '').replace(/\n/g,' '))}</div>
+        <div class="card-desc">${esc(((item.category==='장면(커플)' ? [item.char1Name,item.char2Name].filter(Boolean).join(' × ') : '') || item.note || item.prompt || '').replace(/\n/g,' '))}</div>
         <div class="card-tags">
           <span class="tag ${catClass(item.category)}">${esc(item.category||'기타')}</span>
           ${(item.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
@@ -1117,7 +1137,7 @@ async function render(){
 }
 
 function updateEditMode(){
-  const isCouple=$('categoryInput').value==='커플';
+  const isCouple=$('categoryInput').value==='장면(커플)';
   $('imageField').style.display='flex';
   $('standardPromptFields').style.display=isCouple?'none':'block';
   $('couplePromptFields').style.display=isCouple?'block':'none';
@@ -1129,7 +1149,7 @@ function openEdit(item=null){
 
   $('editTitle').textContent=item?'항목 수정':'새 항목';
   $('titleInput').value=item?.title||'';
-  const normalizedCategory=item?.category==='공용 UC'?'기타':(item?.category||'캐릭터');
+  const normalizedCategory=item?.category==='공용 UC'?'기본 프롬프트':(item?.category==='커플'?'장면(커플)':(item?.category==='장면'?'장면(솔로)':(item?.category==='기타'?'기본 프롬프트':(item?.category||'캐릭터'))));
   $('categoryInput').value=normalizedCategory;
   $('tagsInput').value=(item?.tags||[]).join(', ');
   $('promptInput').value=item?.prompt||'';
@@ -1144,8 +1164,8 @@ function openEdit(item=null){
   $('outfit3PromptInput').value=item?.outfit3Prompt||'';
   renderExtraOutfits(item?.extraOutfits||[]);
   $('char1NameInput').value=item?.char1Name||'';
-  $('char1PromptInput').value=item?.char1Prompt||(item?.category==='커플'?item?.prompt||'':'');
-  $('char1UcInput').value=item?.char1Uc||(item?.category==='커플'?item?.uc||'':'');
+  $('char1PromptInput').value=item?.char1Prompt||(['장면(커플)','커플'].includes(item?.category)?item?.prompt||'':'');
+  $('char1UcInput').value=item?.char1Uc||(['장면(커플)','커플'].includes(item?.category)?item?.uc||'':'');
   $('char2NameInput').value=item?.char2Name||'';
   $('char2PromptInput').value=item?.char2Prompt||'';
   $('char2UcInput').value=item?.char2Uc||'';
@@ -1231,7 +1251,7 @@ async function openDetail(id){
           ${(item.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
         </div>
 
-        ${item.category==='커플'?`
+        ${item.category==='장면(커플)'?`
           <section class="prompt-section">
             <div class="prompt-head">
               <b>CHARACTER 1${item.char1Name?` · ${esc(item.char1Name)}`:''}</b>
@@ -1513,7 +1533,7 @@ $('saveBtn').onclick=async()=>{
   const now=Date.now();
 
   const category=$('categoryInput').value;
-  const isCouple=category==='커플';
+  const isCouple=category==='장면(커플)';
 
   await put({
     id:editingId||crypto.randomUUID(),
