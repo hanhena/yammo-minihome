@@ -391,7 +391,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
     <div class="top-deco"></div>
 
     <div class="window-head">
-      <div class="window-title">prompt_minihome.exe · v6.2</div>
+      <div class="window-title">prompt_minihome.exe · v6.2.1</div>
       <div class="window-actions">
         <button class="win-btn">♡</button>
         <button class="win-btn">－</button>
@@ -1092,7 +1092,7 @@ async function openDetail(id){
             <section class="prompt-section">
               <div class="prompt-head">
                 <b>${esc(item.mainLabel||'MAIN PROMPT')}</b>
-                <button class="btn" data-dcopy="prompt">복사</button>
+                <span><button class="btn" data-rename-label="main">이름변경</button> <button class="btn" data-dcopy="prompt">복사</button></span>
               </div>
               <div class="prompt-box">${esc(item.prompt)}</div>
             </section>
@@ -1102,7 +1102,7 @@ async function openDetail(id){
             <section class="prompt-section">
               <div class="prompt-head">
                 <b>${esc(item.ucLabel||'UC / SUB PROMPT')}</b>
-                <button class="btn" data-dcopy="uc">복사</button>
+                <span><button class="btn" data-rename-label="uc">이름변경</button> <button class="btn" data-dcopy="uc">복사</button></span>
               </div>
               <div class="prompt-box">${esc(item.uc)}</div>
             </section>
@@ -1161,6 +1161,19 @@ async function openDetail(id){
         type==='char2Uc'?item.char2Uc:
         composeAll(item);
       copyText(value||'')
+    }
+  });
+
+  $('detailBody').querySelectorAll('[data-rename-label]').forEach(btn=>{
+    btn.onclick=async()=>{
+      const kind=btn.dataset.renameLabel;
+      const current=kind==='main'?(item.mainLabel||'MAIN PROMPT'):(item.ucLabel||'UC / SUB PROMPT');
+      const next=prompt('이 카드에서 사용할 카테고리 이름',current);
+      if(next===null)return;
+      if(kind==='main')item.mainLabel=next.trim();else item.ucLabel=next.trim();
+      item.updatedAt=Date.now();
+      await put(item);
+      await openDetail(item.id);
     }
   });
 
