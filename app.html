@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta name="robots" content="noindex,nofollow,noarchive" />
 <title>Prompt Minihome</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" />
 <style>
 :root{
   --page:#ececf2;
@@ -32,7 +33,7 @@
   --coupleText:#936f91;
 }
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;font-family:Pretendard,"Noto Sans KR",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);background:var(--page)}
+html,body{margin:0;min-height:100%;font-family:"Pretendard",sans-serif;color:var(--text);background:var(--page)}
 button,input,textarea,select{font:inherit}
 button{cursor:pointer}
 button:disabled{opacity:.5;cursor:default}
@@ -335,6 +336,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
 .outfit-tab.active{background:#eee9f5;border-color:#d5cae4;color:#6c607c;font-weight:800}
 .outfit-display{display:none}
 .outfit-display.active{display:block}
+.select-copy-row{display:flex;justify-content:flex-end;margin-top:7px}
 @media(max-width:700px){.mini-field-grid,.outfit-edit-row{grid-template-columns:1fr}}
 
 /* settings */
@@ -391,7 +393,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
     <div class="top-deco"></div>
 
     <div class="window-head">
-      <div class="window-title">prompt_minihome.exe · v6.2.1</div>
+      <div aria-hidden="true"></div>
       <div class="window-actions">
         <button class="win-btn">♡</button>
         <button class="win-btn">－</button>
@@ -1113,7 +1115,6 @@ async function openDetail(id){
             <section class="prompt-section">
               <div class="prompt-head">
                 <b>SELECT PROMPT</b>
-                <button class="btn" id="copySelectedOutfit">선택 복사</button>
               </div>
               <div class="outfit-tabs">
                 ${[1,2,3].filter(n=>item[`outfit${n}Prompt`]?.trim()).map((n,idx)=>`
@@ -1125,7 +1126,7 @@ async function openDetail(id){
                   <div class="prompt-box">${esc(item[`outfit${n}Prompt`])}</div>
                 </div>
               `).join('')}
-            </section>
+              <div class="select-copy-row">\n                <button class="btn" id="copySelectedOutfit">현재 선택 복사</button>\n              </div>\n            </section>
           `:''}
         `}
 
