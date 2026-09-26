@@ -31,6 +31,10 @@
   --sceneText:#7e71a0;
   --couple:#f3e7f3;
   --coupleText:#936f91;
+  --outfit:#f5eee5;
+  --outfitText:#8d735a;
+  --expression:#f8e9ee;
+  --expressionText:#9a7080;
 }
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;font-family:"Pretendard",sans-serif;color:var(--text);background:var(--page)}
@@ -250,6 +254,8 @@ body{
 .cat-uc{background:var(--uc);color:var(--ucText)}
 .cat-scene{background:var(--scene);color:var(--sceneText)}
 .cat-couple{background:var(--couple);color:var(--coupleText)}
+.cat-outfit{background:var(--outfit);color:var(--outfitText)}
+.cat-expression{background:var(--expression);color:var(--expressionText)}
 .cat-text{background:#f3f0e8;color:#8a7c64}
 .text-note-card{min-height:230px;display:flex;flex-direction:column;padding:12px;cursor:pointer;position:relative}
 .text-note-card:hover{background:#fffdf9}
@@ -442,6 +448,8 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
         <div class="side-menu">
           <button class="side-btn active" data-sidecat=""><span class="ico">♡</span>전체</button>
           <button class="side-btn" data-sidecat="캐릭터"><span class="ico">♙</span>캐릭터</button>
+          <button class="side-btn" data-sidecat="의상"><span class="ico">♢</span>의상</button>
+          <button class="side-btn" data-sidecat="표정"><span class="ico">☻</span>표정</button>
           <button class="side-btn" data-sidecat="기본 프롬프트"><span class="ico">✦</span>기본 프롬프트</button>
           <button class="side-btn" data-sidecat="장면(솔로)"><span class="ico">☆</span>장면(솔로)</button>
           <button class="side-btn" data-sidecat="장면(커플)"><span class="ico">♡</span>장면(커플)</button>
@@ -525,6 +533,8 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
           <label>종류</label>
           <select class="form-select" id="categoryInput">
             <option value="캐릭터">캐릭터</option>
+            <option value="의상">의상</option>
+            <option value="표정">표정</option>
             <option value="기본 프롬프트">기본 프롬프트</option>
             <option value="장면(솔로)">장면(솔로)</option>
             <option value="장면(커플)">장면(커플)</option>
@@ -867,7 +877,7 @@ let settings=JSON.parse(localStorage.getItem(SETTINGS)||'null')||structuredClone
 settings={...DEFAULT_SETTINGS,...settings,theme:{...DEFAULT_THEME,...(settings.theme||{})}};
 
 const $=id=>document.getElementById(id);
-const CATEGORIES=['캐릭터','기본 프롬프트','장면(솔로)','장면(커플)','텍스트 노트'];
+const CATEGORIES=['캐릭터','의상','표정','기본 프롬프트','장면(솔로)','장면(커플)','텍스트 노트'];
 
 function openDB(){
   return new Promise((resolve,reject)=>{
@@ -1003,6 +1013,8 @@ function composeAll(item){
 }
 function catClass(c){
   return c==='캐릭터'?'cat-character':
+         c==='의상'?'cat-outfit':
+         c==='표정'?'cat-expression':
          c==='기본 프롬프트'?'cat-base':
          c==='장면(솔로)'?'cat-scene':
          c==='장면(커플)'?'cat-couple':
