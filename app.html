@@ -188,13 +188,23 @@ body{
 .filters{margin:12px 0 10px}
 .filter-line{display:flex;align-items:flex-start;gap:8px;margin:6px 0}
 .filter-label{width:58px;font-size:10px;color:#a29ca8;padding-top:5px}
-.chips{display:flex;gap:6px;flex-wrap:wrap}
+.order-toggle{
+  flex:0 0 auto;border:1px solid #ddd9e3;background:#fff;color:#8a8390;
+  border-radius:7px;padding:4px 7px;font-size:9px;line-height:1.2;margin-top:1px
+}
+.order-toggle.active{background:#eee9f5;border-color:#d5cae4;color:#6c607c;font-weight:800}
+.chips{display:flex;gap:6px;flex-wrap:wrap;min-width:0;flex:1}
 .chip{
   border:1px solid #ddd9e3;background:#fff;color:#807a85;
   border-radius:8px;padding:6px 10px;font-size:10px
 }
 .chip.active{
   background:#efeaf6;border-color:#d7cce6;color:#6f6380;font-weight:700
+}
+.chips.reorder-mode .chip:not([data-cat=""]):not([data-tag=""]){cursor:grab;border-style:dashed}
+.chips.reorder-mode .chip.dragging{opacity:.42;cursor:grabbing}
+.chips.reorder-mode .chip:not([data-cat=""]):not([data-tag=""]):hover{
+  border-color:#bfb4cf;background:#f8f5fb
 }
 
 .board-head{
@@ -486,10 +496,12 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
         <section class="filters">
           <div class="filter-line">
             <div class="filter-label">종류</div>
+            <button class="order-toggle" id="categoryOrderBtn" type="button">↕ 순서</button>
             <div class="chips" id="categoryChips"></div>
           </div>
           <div class="filter-line">
             <div class="filter-label">태그</div>
+            <button class="order-toggle" id="tagOrderBtn" type="button">↕ 순서</button>
             <div class="chips" id="tagChips"></div>
           </div>
         </section>
@@ -863,6 +875,8 @@ const DEFAULT_SETTINGS={
   bannerPosY:50,
   bannerSizeMode:'cover',
   bannerHeight:220,
+  categoryOrder:[],
+  tagOrder:[],
   theme:{...DEFAULT_THEME}
 };
 
@@ -873,11 +887,108 @@ let currentImage='';
 let selectedCategory='';
 let selectedTag='';
 let sortDesc=true;
+let reorderCategory=false;
+let reorderTag=false;
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'null')||structuredClone(DEFAULT_SETTINGS);
 settings={...DEFAULT_SETTINGS,...settings,theme:{...DEFAULT_THEME,...(settings.theme||{})}};
 
 const $=id=>document.getElementById(id);
 const CATEGORIES=['캐릭터','의상','표정','기본 프롬프트','장면(솔로)','장면(커플)','텍스트 노트'];
+
+function orderedValues(values,savedOrder){
+  const unique=[...new Set(values)];
+  const saved=Array.isArray(savedOrder)?savedOrder:[];
+  return [
+    ...saved.filter(v=>unique.includes(v)),
+    ...unique.filter(v=>!saved.includes(v))
+  ];
+}
+function getCategoryOrder(){
+  return orderedValues(CATEGORIES,settings.categoryOrder);
+}
+function getTagOrder(tags){
+  const alphabetic=[...tags].sort((a,b)=>a.localeCompare(b,'ko'));
+  return orderedValues(alphabetic,settings.tagOrder);
+}
+function applyCategoryOrderToStaticUI(){
+  const order=getCategoryOrder();
+
+  const menu=document.querySelector('.side-menu');
+  if(menu){
+    const backup=$('backupSide');
+    const orderedButtons=order
+      .map(c=>menu.querySelector('[data-sidecat="'+CSS.escape(c)+'"]'))
+      .filter(Boolean);
+    orderedButtons.forEach(btn=>menu.insertBefore(btn,backup));
+  }
+
+  const select=$('categoryInput');
+  if(select){
+    const options=[...select.options];
+    const byValue=new Map(options.map(o=>[o.value,o]));
+    order.forEach(c=>{
+      const option=byValue.get(c);
+      if(option) select.appendChild(option);
+    });
+  }
+}
+function saveChipOrder(type){
+  if(type==='category'){
+    settings.categoryOrder=[...$('categoryChips').querySelectorAll('[data-cat]')]
+      .map(x=>x.dataset.cat).filter(Boolean);
+  }else{
+    settings.tagOrder=[...$('tagChips').querySelectorAll('[data-tag]')]
+      .map(x=>x.dataset.tag).filter(Boolean);
+  }
+  saveSettings();
+  applyCategoryOrderToStaticUI();
+}
+function attachReorderEvents(containerId,type){
+  const container=$(containerId);
+  let dragged=null;
+
+  container.addEventListener('dragstart',e=>{
+    const selector=type==='category'?'[data-cat]':'[data-tag]';
+    const chip=e.target.closest(selector);
+    const value=type==='category'?chip?.dataset.cat:chip?.dataset.tag;
+    const active=type==='category'?reorderCategory:reorderTag;
+    if(!chip||!value||!active){e.preventDefault();return}
+    dragged=chip;
+    chip.classList.add('dragging');
+    if(e.dataTransfer){
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',value);
+    }
+  });
+
+  container.addEventListener('dragover',e=>{
+    if(!dragged)return;
+    e.preventDefault();
+    const selector=type==='category'?'[data-cat]':'[data-tag]';
+    const target=e.target.closest(selector);
+    if(!target||target===dragged)return;
+    const value=type==='category'?target.dataset.cat:target.dataset.tag;
+    if(!value)return;
+    const rect=target.getBoundingClientRect();
+    const after=(e.clientY>rect.top+rect.height/2) ||
+      (Math.abs(e.clientY-(rect.top+rect.height/2))<rect.height/2 && e.clientX>rect.left+rect.width/2);
+    container.insertBefore(dragged,after?target.nextSibling:target);
+  });
+
+  container.addEventListener('drop',e=>{
+    if(!dragged)return;
+    e.preventDefault();
+    saveChipOrder(type);
+  });
+
+  container.addEventListener('dragend',()=>{
+    if(!dragged)return;
+    dragged.classList.remove('dragging');
+    dragged=null;
+    saveChipOrder(type);
+    render();
+  });
+}
 
 function openDB(){
   return new Promise((resolve,reject)=>{
@@ -1070,17 +1181,28 @@ async function render(){
   $('totalCount').textContent=items.length;
   $('todayCount').textContent=items.filter(x=>sameDay(x.createdAt)).length;
 
-  const tags=[...new Set(items.flatMap(x=>x.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));
+  const rawTags=[...new Set(items.flatMap(x=>x.tags||[]))];
+  const categories=getCategoryOrder();
+  const tags=getTagOrder(rawTags);
+
+  $('categoryChips').classList.toggle('reorder-mode',reorderCategory);
+  $('tagChips').classList.toggle('reorder-mode',reorderTag);
+  $('categoryOrderBtn').classList.toggle('active',reorderCategory);
+  $('tagOrderBtn').classList.toggle('active',reorderTag);
+  $('categoryOrderBtn').textContent=reorderCategory?'✓ 완료':'↕ 순서';
+  $('tagOrderBtn').textContent=reorderTag?'✓ 완료':'↕ 순서';
 
   $('categoryChips').innerHTML=[
     `<button class="chip ${!selectedCategory?'active':''}" data-cat="">전체</button>`,
-    ...CATEGORIES.map(c=>`<button class="chip ${selectedCategory===c?'active':''}" data-cat="${esc(c)}">${esc(c)}</button>`)
+    ...categories.map(c=>`<button class="chip ${selectedCategory===c?'active':''}" data-cat="${esc(c)}" draggable="${reorderCategory?'true':'false'}">${esc(c)}</button>`)
   ].join('');
 
   $('tagChips').innerHTML=[
     `<button class="chip ${!selectedTag?'active':''}" data-tag="">전체</button>`,
-    ...tags.map(t=>`<button class="chip ${selectedTag===t?'active':''}" data-tag="${esc(t)}">${esc(t)}</button>`)
+    ...tags.map(t=>`<button class="chip ${selectedTag===t?'active':''}" data-tag="${esc(t)}" draggable="${reorderTag?'true':'false'}">${esc(t)}</button>`)
   ].join('');
+
+  applyCategoryOrderToStaticUI();
 
   document.querySelectorAll('[data-sidecat]').forEach(btn=>{
     btn.classList.toggle('active',btn.dataset.sidecat===selectedCategory)
@@ -1425,17 +1547,31 @@ $('grid').addEventListener('click',async e=>{
 
 /* 필터 */
 $('categoryChips').addEventListener('click',e=>{
+  if(reorderCategory)return;
   const b=e.target.closest('[data-cat]');
   if(!b)return;
   selectedCategory=b.dataset.cat;
   render()
 });
 $('tagChips').addEventListener('click',e=>{
+  if(reorderTag)return;
   const b=e.target.closest('[data-tag]');
   if(!b)return;
   selectedTag=b.dataset.tag;
   render()
 });
+$('categoryOrderBtn').onclick=()=>{
+  reorderCategory=!reorderCategory;
+  if(reorderCategory)reorderTag=false;
+  render();
+};
+$('tagOrderBtn').onclick=()=>{
+  reorderTag=!reorderTag;
+  if(reorderTag)reorderCategory=false;
+  render();
+};
+attachReorderEvents('categoryChips','category');
+attachReorderEvents('tagChips','tag');
 document.querySelectorAll('[data-sidecat]').forEach(btn=>{
   btn.onclick=()=>{
     selectedCategory=btn.dataset.sidecat;
@@ -1759,6 +1895,7 @@ openDB()
     }
     await migrateLegacyItems();
     applySettings();
+    applyCategoryOrderToStaticUI();
     render()
   })
   .catch(err=>{
