@@ -553,7 +553,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
           </select>
         </div>
 
-        <div class="field full">
+        <div class="field full" id="tagsField">
           <label>태그</label>
           <input type="text" id="tagsInput" placeholder="쉼표로 구분 · 예: 오너캐, NAI5, 커플" />
         </div>
@@ -564,6 +564,11 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
             <input type="file" id="imageInput" accept="image/*" />
             <img class="preview" id="imagePreview" alt="미리보기" />
           </div>
+        </div>
+
+        <div id="simplePromptFields" class="field full" style="display:none">
+          <label>프롬프트</label>
+          <textarea id="simplePromptInput" style="min-height:260px" placeholder="프롬프트를 입력하세요."></textarea>
         </div>
 
         <div id="standardPromptFields" class="field full">
@@ -646,7 +651,7 @@ textarea{min-height:115px;resize:vertical;line-height:1.5}
           </div>
         </div>
 
-        <div class="field full">
+        <div class="field full" id="noteField">
           <label>메모</label>
           <textarea id="noteInput" placeholder="수정 포인트, 버전, 사용 팁 등"></textarea>
         </div>
@@ -1073,6 +1078,9 @@ async function copyText(text){
     document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('복사했습니다.')
   }
 }
+function isSimplePromptCategory(category){
+  return category==='표정'||category==='장면(솔로)'||category==='장면(커플)';
+}
 function composeCharacter(item,n){
   const name=item[`char${n}Name`]?.trim()||`캐릭터 ${n}`;
   const prompt=item[`char${n}Prompt`]?.trim()||'';
@@ -1112,11 +1120,25 @@ function collectExtraOutfits(){
     prompt:row.querySelector('.extra-outfit-prompt').value.trim()
   })).filter(v=>v.label||v.prompt);
 }
+function simplePromptValue(item){
+  const arr=[];
+  if(item.prompt?.trim()) arr.push(item.prompt.trim());
+  if(item.uc?.trim()) arr.push(item.uc.trim());
+
+  const variants=getOutfitVariants(item);
+  if(variants.length){
+    arr.push(variants.map(v=>`[${v.label}]\n${v.prompt}`).join('\n\n'));
+  }
+
+  if(item.category==='장면(커플)'){
+    const legacyCouple=[composeCharacter(item,1),composeCharacter(item,2)].filter(Boolean).join('\n\n');
+    if(legacyCouple)arr.push(legacyCouple);
+  }
+  return arr.filter(Boolean).join('\n\n');
+}
 function composeAll(item){
   if(item.category==='텍스트 노트') return item.textContent?.trim()||'';
-  if(item.category==='장면(커플)'){
-    return [composeCharacter(item,1),composeCharacter(item,2)].filter(Boolean).join('\n\n');
-  }
+  if(isSimplePromptCategory(item.category)) return simplePromptValue(item);
   const arr=[];
   if(item.prompt?.trim()) arr.push(item.prompt.trim());
   if(item.uc?.trim()) arr.push(item.uc.trim());
@@ -1181,7 +1203,7 @@ async function render(){
   $('totalCount').textContent=items.length;
   $('todayCount').textContent=items.filter(x=>sameDay(x.createdAt)).length;
 
-  const rawTags=[...new Set(items.flatMap(x=>x.tags||[]))];
+  const rawTags=[...new Set(items.filter(x=>!isSimplePromptCategory(x.category)).flatMap(x=>x.tags||[]))];
   const categories=getCategoryOrder();
   const tags=getTagOrder(rawTags);
 
@@ -1259,10 +1281,10 @@ async function render(){
 
       <div class="card-body" data-open="${item.id}">
         <div class="card-title">${esc(item.title||'제목 없음')}</div>
-        <div class="card-desc">${esc(((item.category==='장면(커플)' ? [item.char1Name,item.char2Name].filter(Boolean).join(' × ') : '') || item.note || item.prompt || '').replace(/\n/g,' '))}</div>
+        <div class="card-desc">${esc((isSimplePromptCategory(item.category)?simplePromptValue(item):(item.note||item.prompt||'')).replace(/\n/g,' '))}</div>
         <div class="card-tags">
           <span class="tag ${catClass(item.category)}">${esc(item.category||'기타')}</span>
-          ${(item.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+          ${isSimplePromptCategory(item.category)?'':(item.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
         </div>
       </div>
     </article>
@@ -1271,10 +1293,15 @@ async function render(){
 }
 
 function updateEditMode(){
-  const isCouple=$('categoryInput').value==='장면(커플)';
+  const category=$('categoryInput').value;
+  const isSimple=isSimplePromptCategory(category);
+
   $('imageField').style.display='flex';
-  $('standardPromptFields').style.display=isCouple?'none':'block';
-  $('couplePromptFields').style.display=isCouple?'block':'none';
+  $('tagsField').style.display=isSimple?'none':'';
+  $('noteField').style.display=isSimple?'none':'';
+  $('simplePromptFields').style.display=isSimple?'block':'none';
+  $('standardPromptFields').style.display=isSimple?'none':'block';
+  $('couplePromptFields').style.display='none';
 }
 
 function openEdit(item=null){
@@ -1286,6 +1313,7 @@ function openEdit(item=null){
   const normalizedCategory=item?.category==='공용 UC'?'기본 프롬프트':(item?.category==='커플'?'장면(커플)':(item?.category==='장면'?'장면(솔로)':(item?.category==='기타'?'기본 프롬프트':(item?.category||'캐릭터'))));
   $('categoryInput').value=normalizedCategory;
   $('tagsInput').value=(item?.tags||[]).join(', ');
+  $('simplePromptInput').value=item&&isSimplePromptCategory(normalizedCategory)?simplePromptValue({...item,category:normalizedCategory}):(item?.prompt||'');
   $('promptInput').value=item?.prompt||'';
   $('ucInput').value=item?.uc||'';
   $('mainLabelInput').value=item?.mainLabel||'';
@@ -1360,6 +1388,52 @@ async function openDetail(id){
     $('detailModal').classList.add('open');
     $('textNoteCopy').onclick=()=>copyText(item.textContent||'');
     $('detailEdit').onclick=()=>{closeModal('detailModal');openTextEdit(item)};
+    $('detailDelete').onclick=async()=>{
+      if(confirm(`"${item.title}"을(를) 삭제할까요?`)){
+        await remove(item.id);
+        closeModal('detailModal');
+        render();
+        toast('삭제했습니다.')
+      }
+    };
+    return;
+  }
+
+  if(isSimplePromptCategory(item.category)){
+    const prompt=simplePromptValue(item);
+    $('detailBody').innerHTML=`
+      <div class="detail-layout">
+        <div class="detail-image">
+          ${item.image?`<img src="${item.image}" alt="${esc(item.title)}">`:`<div class="thumb-empty">no image</div>`}
+        </div>
+
+        <div class="detail-info">
+          <h3>${esc(item.title)}</h3>
+          <div class="detail-meta">
+            <span class="tag ${catClass(item.category)}">${esc(item.category)}</span>
+          </div>
+
+          ${prompt?`
+            <section class="prompt-section">
+              <div class="prompt-head">
+                <b>PROMPT</b>
+                <button class="btn" id="simplePromptCopy">복사</button>
+              </div>
+              <div class="prompt-box">${esc(prompt)}</div>
+            </section>
+          `:''}
+
+          <div class="detail-actions">
+            <button class="btn" id="detailEdit">수정</button>
+            <button class="btn danger" id="detailDelete">삭제</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('detailModal').classList.add('open');
+    $('simplePromptCopy')?.addEventListener('click',()=>copyText(prompt));
+    $('detailEdit').onclick=()=>{closeModal('detailModal');openEdit(item)};
     $('detailDelete').onclick=async()=>{
       if(confirm(`"${item.title}"을(를) 삭제할까요?`)){
         await remove(item.id);
@@ -1681,34 +1755,34 @@ $('saveBtn').onclick=async()=>{
   const now=Date.now();
 
   const category=$('categoryInput').value;
-  const isCouple=category==='장면(커플)';
+  const isSimple=isSimplePromptCategory(category);
 
   await put({
     id:editingId||crypto.randomUUID(),
     title,
     category,
-    tags:$('tagsInput').value.split(',').map(x=>x.trim()).filter(Boolean),
+    tags:isSimple?[]:$('tagsInput').value.split(',').map(x=>x.trim()).filter(Boolean),
     image:currentImage,
     textType:'',
     textContent:'',
-    prompt:isCouple?'':$('promptInput').value.trim(),
-    uc:isCouple?'':$('ucInput').value.trim(),
-    mainLabel:isCouple?'':$('mainLabelInput').value.trim(),
-    ucLabel:isCouple?'':$('ucLabelInput').value.trim(),
-    outfit1Label:isCouple?'':($('outfit1LabelInput').value.trim()||'의상 1'),
-    outfit1Prompt:isCouple?'':$('outfit1PromptInput').value.trim(),
-    outfit2Label:isCouple?'':($('outfit2LabelInput').value.trim()||'의상 2'),
-    outfit2Prompt:isCouple?'':$('outfit2PromptInput').value.trim(),
-    outfit3Label:isCouple?'':($('outfit3LabelInput').value.trim()||'의상 3'),
-    outfit3Prompt:isCouple?'':$('outfit3PromptInput').value.trim(),
-    extraOutfits:isCouple?[]:collectExtraOutfits(),
-    char1Name:isCouple?$('char1NameInput').value.trim():'',
-    char1Prompt:isCouple?$('char1PromptInput').value.trim():'',
-    char1Uc:isCouple?$('char1UcInput').value.trim():'',
-    char2Name:isCouple?$('char2NameInput').value.trim():'',
-    char2Prompt:isCouple?$('char2PromptInput').value.trim():'',
-    char2Uc:isCouple?$('char2UcInput').value.trim():'',
-    note:$('noteInput').value.trim(),
+    prompt:isSimple?$('simplePromptInput').value.trim():$('promptInput').value.trim(),
+    uc:isSimple?'':$('ucInput').value.trim(),
+    mainLabel:isSimple?'':$('mainLabelInput').value.trim(),
+    ucLabel:isSimple?'':$('ucLabelInput').value.trim(),
+    outfit1Label:isSimple?'':($('outfit1LabelInput').value.trim()||'의상 1'),
+    outfit1Prompt:isSimple?'':$('outfit1PromptInput').value.trim(),
+    outfit2Label:isSimple?'':($('outfit2LabelInput').value.trim()||'의상 2'),
+    outfit2Prompt:isSimple?'':$('outfit2PromptInput').value.trim(),
+    outfit3Label:isSimple?'':($('outfit3LabelInput').value.trim()||'의상 3'),
+    outfit3Prompt:isSimple?'':$('outfit3PromptInput').value.trim(),
+    extraOutfits:isSimple?[]:collectExtraOutfits(),
+    char1Name:'',
+    char1Prompt:'',
+    char1Uc:'',
+    char2Name:'',
+    char2Prompt:'',
+    char2Uc:'',
+    note:isSimple?'':$('noteInput').value.trim(),
     favorite:old?.favorite||false,
     createdAt:old?.createdAt||now,
     updatedAt:now
